@@ -85,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         flexibleSpace: Container(decoration: AppTheme.appBarGradient),
         title: Text('Weatherboo', style: AppTypography.brandTitle(20)),
         actions: [
