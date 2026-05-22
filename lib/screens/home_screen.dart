@@ -4,7 +4,6 @@ import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../services/weather_service.dart';
 import '../widgets/responsive_center.dart';
-import '../models/city_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,14 +14,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final WeatherService _weatherService = WeatherService();
-  final TextEditingController _searchController = TextEditingController();
   Map<String, dynamic>? _currentWeather;
   Map<String, dynamic>? _forecast;
   bool _isLoading = true;
   String? _errorMessage;
   String _currentCity = 'New York';
-  List<String> _searchResults = [];
-  bool _isSearching = false;
 
   @override
   void initState() {
@@ -30,10 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadWeather();
   }
 
-  Future<void> _loadWeather([String? city]) async {
+  Future<void> _loadWeather() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final profile = userProvider.userProfile;
-    final targetCity = city ?? profile?['default_city'] ?? 'New York';
+    final targetCity = profile?['default_city'] ?? 'New York';
 
     setState(() {
       _isLoading = true;
@@ -60,110 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
-  }
-
-  void _onSearchChanged(String query) {
-    if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-        _isSearching = false;
-      });
-      return;
-    }
-
-    final results = CityLandmarks.cities.keys
-        .where((city) => city.toLowerCase().contains(query.toLowerCase()))
-        .toList()
-        .cast<String>();
-
-    setState(() {
-      _searchResults = results;
-      _isSearching = true;
-    });
-  }
-
-  void _selectCity(String city) {
-    _searchController.clear();
-    setState(() {
-      _searchResults = [];
-      _isSearching = false;
-    });
-    _loadWeather(city);
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.sakura.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearchChanged,
-        decoration: InputDecoration(
-          hintText: 'Search for a city...',
-          prefixIcon: const Icon(Icons.search, color: AppColors.sakura),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear, color: AppColors.textMuted),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() {
-                      _searchResults = [];
-                      _isSearching = false;
-                    });
-                  },
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          hintStyle: AppTypography.body(14, color: AppColors.textMuted),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchResults() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.sakura.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: _searchResults.length > 5 ? 5 : _searchResults.length,
-        separatorBuilder: (context, index) => Divider(
-          color: AppColors.lavender.withValues(alpha: 0.3),
-          height: 1,
-        ),
-        itemBuilder: (context, index) {
-          final city = _searchResults[index];
-          return ListTile(
-            title: Text(
-              city,
-              style: AppTypography.body(16),
-            ),
-            leading: const Icon(Icons.location_city, color: AppColors.sakura),
-            onTap: () => _selectCity(city),
-          );
-        },
-      ),
-    );
   }
 
   String _getWeatherIcon(String? weatherMain) {
@@ -247,12 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 100, 16, 16),
                     child: Column(
                       children: [
-                        _buildSearchBar(),
-                        if (_isSearching && _searchResults.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          _buildSearchResults(),
-                        ],
-                        const SizedBox(height: 32),
                         Column(
                           children: [
                             Text(
@@ -336,8 +222,12 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppColors.sakura.withValues(alpha: 0.15),
+                color: AppColors.sakura.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.sakura.withValues(alpha: 0.3),
+                  width: 2,
+                ),
               ),
               child: Center(
                 child: Text(
