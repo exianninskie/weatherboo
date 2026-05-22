@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
 
 class CustomLogo extends StatelessWidget {
   final double size;
@@ -16,58 +16,29 @@ class CustomLogo extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Weather icon
         Container(
           width: size * 0.6,
           height: size * 0.6,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF667EEA),
-                Color(0xFF764BA2),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(size * 0.15),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF667EEA).withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
+          decoration: AppTheme.logoGradient,
           child: Center(
             child: Icon(
-              Icons.cloud,
-              size: size * 0.35,
-              color: Colors.white,
+              Icons.cloud_queue_rounded,
+              size: size * 0.34,
+              color: AppColors.onPrimary,
             ),
           ),
         ),
         if (showFull) ...[
           SizedBox(height: size * 0.1),
-          // Text logo
           Text(
             'Weatherboo',
-            style: GoogleFonts.quicksand(
-              fontSize: size * 0.2,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: 1,
-            ),
+            style: AppTypography.brandTitle(size * 0.2),
           ),
-          SizedBox(height: size * 0.05),
-          // Tagline
+          SizedBox(height: size * 0.04),
           Text(
-            'Your Weather Companion',
-            style: GoogleFonts.quicksand(
-              fontSize: size * 0.08,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF667EEA),
-              letterSpacing: 0.5,
-            ),
+            'kawaii forecasts, just for you ♡',
+            style: AppTypography.brandSubtitle(size * 0.075),
+            textAlign: TextAlign.center,
           ),
         ],
       ],

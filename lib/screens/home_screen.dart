@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../widgets/custom_logo.dart';
 
@@ -14,83 +14,71 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          'Weatherboo',
-          style: GoogleFonts.quicksand(
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: const Color(0xFF667EEA),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        flexibleSpace: Container(decoration: AppTheme.appBarGradient),
+        title: Text('Weatherboo', style: AppTypography.brandTitle(20)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-            color: Colors.white,
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => Navigator.pushNamed(context, '/profile'),
+            tooltip: 'Profile',
           ),
         ],
       ),
-      body: Consumer<UserProvider>(
-        builder: (context, userProvider, child) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CustomLogo(
-                  size: MediaQuery.of(context).size.width * 0.3,
-                  showFull: true,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Welcome to Weatherboo!',
-                  style: GoogleFonts.quicksand(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+      body: KawaiiBackground(
+        child: Consumer<UserProvider>(
+          builder: (context, userProvider, child) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 100, 24, 24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomLogo(
+                        size: MediaQuery.of(context).size.width * 0.32,
+                        showFull: true,
+                      ),
+                      const SizedBox(height: 36),
+                      Text(
+                        'Your cozy forecast ☁️',
+                        style: theme.textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      if (userProvider.email != null)
+                        Text(
+                          'Logged in as ${userProvider.email}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.sakuraDeep,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            await userProvider.signOut();
+                            if (context.mounted) {
+                              Navigator.pushReplacementNamed(context, '/login');
+                            }
+                          },
+                          child: const Text('Sign Out'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                if (userProvider.email != null)
-                  Text(
-                    'Logged in as ${userProvider.email}',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () async {
-                    await userProvider.signOut();
-                    if (mounted) {
-                      Navigator.pushReplacementNamed(context, '/login');
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF667EEA),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
-                  child: Text(
-                    'Sign Out',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

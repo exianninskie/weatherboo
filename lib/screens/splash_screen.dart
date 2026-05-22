@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-
+import '../theme/app_theme.dart';
 import '../widgets/custom_logo.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,12 +23,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: CustomLogo(
-          size: MediaQuery.of(context).size.width * 0.3,
-          showFull: true,
+    return const Scaffold(
+      body: KawaiiBackground(
+        child: Center(
+          child: CustomLogo(
+            size: 280,
+            showFull: true,
+          ),
         ),
       ),
     );
