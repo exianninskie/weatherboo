@@ -33,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCurrentUser();
+      _initializeProfile();
     });
   }
 
@@ -48,24 +48,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _loadCurrentUser() async {
+  Future<void> _initializeProfile() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await userProvider.loadCurrentUser();
-    _loadUserData();
+
+    if (userProvider.userProfile == null) {
+      await userProvider.loadCurrentUser();
+    }
+
+    if (!mounted) return;
+    _syncFromProvider(userProvider);
   }
 
-  void _loadUserData() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (userProvider.userProfile != null) {
-      _displayNameController.text = userProvider.userProfile!['display_name'] ?? '';
+  void _syncFromProvider(UserProvider userProvider) {
+    final profile = userProvider.userProfile;
+    if (profile == null) return;
+
+    setState(() {
+      _displayNameController.text = profile['display_name'] ?? '';
       _emailController.text = userProvider.email ?? '';
-      _phoneController.text = userProvider.userProfile!['phone'] ?? '';
-      _locationController.text = userProvider.userProfile!['location'] ?? '';
-      _bioController.text = userProvider.userProfile!['bio'] ?? '';
-      _cityController.text = userProvider.userProfile!['default_city'] ?? 'New York';
-      _notificationsEnabled = userProvider.userProfile!['notifications_enabled'] ?? true;
-      _temperatureUnit = userProvider.userProfile!['temperature_unit'] ?? 'Celsius';
-    }
+      _phoneController.text = profile['phone'] ?? '';
+      _locationController.text = profile['location'] ?? '';
+      _bioController.text = profile['bio'] ?? '';
+      _cityController.text = profile['default_city'] ?? '';
+      _notificationsEnabled = profile['notifications_enabled'] ?? true;
+      _temperatureUnit = profile['temperature_unit'] ?? 'Celsius';
+    });
   }
 
   @override
@@ -726,7 +733,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _isEditing = false;
     });
-    _loadUserData(); // Reset to original values
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    _syncFromProvider(userProvider);
   }
 
   Future<void> _saveProfile() async {
@@ -759,7 +767,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _isEditing = false;
         });
-        
+        _syncFromProvider(userProvider);
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'home_screen.dart';
-import 'signup_screen.dart';
 import '../widgets/custom_logo.dart';
 import '../providers/user_provider.dart';
 
@@ -39,10 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-        );
+        Navigator.pushReplacementNamed(context, '/home');
       } else if (mounted) {
         String errorMessage = userProvider.error ?? 'Error signing in';
         if (errorMessage.contains('email_not_confirmed')) {
@@ -228,10 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Sign up link
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignupScreen()),
-                    );
+                    Navigator.pushNamed(context, '/signup');
                   },
                   child: Text(
                     "Don't have an account? Sign Up",

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'login_screen.dart';
 import '../widgets/custom_logo.dart';
 import '../providers/user_provider.dart';
 
@@ -54,10 +53,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sign up successful! Please sign in.')),
         );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
+        Navigator.pushReplacementNamed(context, '/login');
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(userProvider.error ?? 'Failed to sign up')),
@@ -279,10 +275,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 // Sign in link
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    );
+                    Navigator.pushReplacementNamed(context, '/login');
                   },
                   child: Text(
                     "Already have an account? Sign In",

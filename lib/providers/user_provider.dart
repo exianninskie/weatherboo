@@ -99,19 +99,29 @@ class UserProvider with ChangeNotifier {
   }
 
   // Load current user from Supabase auth
-  Future<void> loadCurrentUser() async {
+  Future<void> loadCurrentUser({bool forceReload = false}) async {
+    final currentUser = _supabaseService.currentUser;
+    if (currentUser == null) {
+      _isLoggedIn = false;
+      notifyListeners();
+      return;
+    }
+
+    _isLoggedIn = true;
+    _userId = currentUser.id;
+    _email = currentUser.email;
+
+    if (!forceReload && _userProfile != null) {
+      notifyListeners();
+      return;
+    }
+
     _setLoading(true);
     _error = null;
-    
+
     try {
-      final currentUser = _supabaseService.currentUser;
-      if (currentUser != null) {
-        _isLoggedIn = true;
-        _userId = currentUser.id;
-        _email = currentUser.email;
-        await _loadUserProfile();
-        notifyListeners();
-      }
+      await _loadUserProfile();
+      notifyListeners();
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -164,6 +174,8 @@ class UserProvider with ChangeNotifier {
     try {
       final success = await _supabaseService.updateUserProfile(_userId!, data);
       if (success) {
+        _userProfile = {...?_userProfile, ...data};
+        notifyListeners();
         await _loadUserProfile();
         return true;
       }
