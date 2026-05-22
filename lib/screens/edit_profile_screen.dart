@@ -5,6 +5,7 @@ import 'dart:io';
 import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/constants.dart';
+import '../widgets/responsive_center.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -14,9 +15,6 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  static const double _wideScreenBreakpoint = 500;
-  static const double _webContentMaxWidth = 440;
-
   final _formKey = GlobalKey<FormState>();
   final _displayNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -59,14 +57,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (!mounted) return;
     _syncFromProvider(userProvider);
-  }
-
-  double _contentMaxWidth(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    if (screenWidth > _wideScreenBreakpoint) {
-      return _webContentMaxWidth;
-    }
-    return screenWidth - 32;
   }
 
   InputDecoration _fieldDecoration({
@@ -145,26 +135,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final maxWidth = _contentMaxWidth(context);
-
-          return Align(
-            alignment: Alignment.topCenter,
+          return ResponsiveCenter(
+            padding: const EdgeInsets.fromLTRB(16, 88, 16, 16),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 88, 16, 16),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildProfileHeader(userProvider),
-                    const SizedBox(height: 24),
-                    _buildProfileForm(userProvider),
-                    const SizedBox(height: 24),
-                    _buildPreferencesSection(userProvider),
-                    const SizedBox(height: 32),
-                  ],
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildProfileHeader(userProvider),
+                  const SizedBox(height: 24),
+                  _buildProfileForm(userProvider),
+                  const SizedBox(height: 24),
+                  _buildPreferencesSection(userProvider),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
           );
@@ -232,6 +216,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 fontSize: 12,
                 color: AppColors.muted,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ],
         ),

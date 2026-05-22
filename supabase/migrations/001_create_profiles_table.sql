@@ -45,6 +45,12 @@ CREATE POLICY "Users can insert own profile"
   ON public.profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
+-- Allow service role to insert profiles (for trigger)
+CREATE POLICY "Service role can insert profiles"
+  ON public.profiles FOR INSERT
+  TO service_role
+  WITH CHECK (true);
+
 -- Function to handle new user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -60,7 +66,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Drop existing trigger if it exists
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;

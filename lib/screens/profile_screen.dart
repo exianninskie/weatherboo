@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/constants.dart';
+import '../widgets/responsive_center.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -29,6 +30,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _signOut() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.signOut();
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,6 +60,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 expandedHeight: 200,
                 floating: false,
                 pinned: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                  onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+                ),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.edit_outlined),
@@ -62,82 +75,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                     tooltip: 'Edit Profile',
                   ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'signout') {
+                        _signOut();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'signout',
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout, size: 20),
+                            SizedBox(width: 12),
+                            Text('Sign Out'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    Transform.translate(
-                      offset: const Offset(0, -50),
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 60,
-                            backgroundColor: AppColors.surfaceElevated,
-                            backgroundImage: profilePictureUrl != null
-                                ? NetworkImage(profilePictureUrl)
-                                : null,
-                            child: profilePictureUrl == null
-                                ? Text(
-                                    displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
-                                    style: const TextStyle(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.sakuraDeep,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            displayName,
-                            style: AppTypography.headline(24),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            email,
-                            style: AppTypography.body(14, color: AppColors.textMuted),
-                          ),
-                          if (bio.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 32),
-                              child: Text(
+                child: ResponsiveCenter(
+                  child: Column(
+                    children: [
+                      Transform.translate(
+                        offset: const Offset(0, -50),
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 50,
+                              backgroundColor: AppColors.surfaceElevated,
+                              backgroundImage: profilePictureUrl != null
+                                  ? NetworkImage(profilePictureUrl)
+                                  : null,
+                              child: profilePictureUrl == null
+                                  ? Text(
+                                      displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.sakuraDeep,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              displayName,
+                              style: AppTypography.headline(22),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              email,
+                              style: AppTypography.body(14, color: AppColors.textMuted),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            if (bio.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
                                 bio,
                                 style: AppTypography.body(14),
                                 textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
-                          if (location.isNotEmpty) ...[
-                            const SizedBox(height: 8),
+                            ],
+                            if (location.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.location_on, size: 16, color: AppColors.sakura),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      location,
+                                      style: AppTypography.body(14, color: AppColors.textMuted),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.location_on, size: 16, color: AppColors.sakura),
-                                const SizedBox(width: 4),
-                                Text(
-                                  location,
-                                  style: AppTypography.body(14, color: AppColors.textMuted),
-                                ),
+                                _buildStatItem('Days Active', '42'),
+                                const SizedBox(width: 24),
+                                _buildStatItem('Cities', '12'),
+                                const SizedBox(width: 24),
+                                _buildStatItem('Alerts', '23'),
                               ],
                             ),
-                          ],
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildStatItem('Days Active', '42'),
-                              const SizedBox(width: 24),
-                              _buildStatItem('Cities', '12'),
-                              const SizedBox(width: 24),
-                              _buildStatItem('Alerts', '23'),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(
+                            const SizedBox(height: 24),
+                            Row(
                               children: [
                                 Expanded(
                                   child: _buildInfoCard(
@@ -156,21 +194,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: _buildInfoCard(
+                            const SizedBox(height: 12),
+                            _buildInfoCard(
                               icon: Icons.notifications,
                               label: 'Notifications',
                               value: profile?['notifications_enabled'] == true ? 'Enabled' : 'Disabled',
                             ),
-                          ),
-                          const SizedBox(height: 32),
-                        ],
+                            const SizedBox(height: 32),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
