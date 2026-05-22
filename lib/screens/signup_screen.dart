@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_logo.dart';
 import '../providers/user_provider.dart';
+import '../models/city_model.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -18,6 +19,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  String _selectedCity = 'New York';
 
   Future<void> _signUp() async {
     if (_emailController.text.isEmpty ||
@@ -45,6 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
         _emailController.text,
         _passwordController.text,
         displayName,
+        defaultCity: _selectedCity,
       );
 
       if (success && mounted) {
@@ -150,6 +153,27 @@ class _SignupScreenState extends State<SignupScreen> {
                           },
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedCity,
+                      decoration: const InputDecoration(
+                        labelText: 'Default City',
+                        prefixIcon: Icon(Icons.location_city),
+                      ),
+                      items: CityLandmarks.cities.keys.toList().map((String city) {
+                        return DropdownMenuItem<String>(
+                          value: city,
+                          child: Text(city),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedCity = newValue;
+                          });
+                        }
+                      },
                     ),
                     const SizedBox(height: 28),
                     SizedBox(

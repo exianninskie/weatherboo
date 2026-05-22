@@ -22,12 +22,16 @@ class SupabaseService {
   }
   
   // Sign up user
-  Future<Map<String, dynamic>?> signUp(String email, String password, String displayName) async {
+  Future<Map<String, dynamic>?> signUp(String email, String password, String displayName, {String? defaultCity}) async {
     try {
+      final data = {'display_name': displayName};
+      if (defaultCity != null) {
+        data['default_city'] = defaultCity;
+      }
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
-        data: {'display_name': displayName},
+        data: data,
       );
       return response.user?.toJson();
     } catch (e) {

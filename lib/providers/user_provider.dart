@@ -53,12 +53,12 @@ class UserProvider with ChangeNotifier {
   }
 
   // Sign up user
-  Future<bool> signUp(String email, String password, String displayName) async {
+  Future<bool> signUp(String email, String password, String displayName, {String? defaultCity}) async {
     _setLoading(true);
     _error = null;
     
     try {
-      final response = await _supabaseService.signUp(email, password, displayName);
+      final response = await _supabaseService.signUp(email, password, displayName, defaultCity: defaultCity);
       if (response != null) {
         _isLoggedIn = true;
         _userId = response['id'];
