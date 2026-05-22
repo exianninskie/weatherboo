@@ -1,0 +1,19 @@
+{
+  "watch": {
+    "ignore": [
+      "node_modules",
+      ".git",
+      ".dart_tool",
+      "build",
+      ".flutter-plugins",
+      ".flutter-plugins-dependencies",
+      "android",
+      "ios",
+      "linux",
+      "macos",
+      "windows",
+      "**/flutter/ephemeral",
+      "**/.plugin_symlinks"
+    ]
+  }
+}
