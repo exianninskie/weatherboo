@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../services/weather_service.dart';
 import '../widgets/responsive_center.dart';
+import '../models/city_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   String _currentCity = 'New York';
+  bool _hasShownCityPrompt = false;
+  String? _selectedCity;
 
   @override
   void initState() {
@@ -47,6 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
           _forecast = forecast;
           _isLoading = false;
         });
+
+        // Show city prompt if default city is still 'New York' (database default)
+        if (!_hasShownCityPrompt && targetCity == 'New York') {
+          _hasShownCityPrompt = true;
+          _showCitySelectionDialog(userProvider);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -56,6 +65,63 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
+  }
+
+  void _showCitySelectionDialog(UserProvider userProvider) {
+    setState(() => _selectedCity = 'New York');
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Select Your Default City'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: DropdownButtonFormField<String>(
+              value: _selectedCity,
+              decoration: const InputDecoration(
+                labelText: 'Default City',
+                prefixIcon: Icon(Icons.location_city),
+              ),
+              items: CityLandmarks.cities.keys.toList().map((String city) {
+                return DropdownMenuItem<String>(
+                  value: city,
+                  child: Text(city),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  setDialogState(() {
+                    _selectedCity = newValue;
+                  });
+                }
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (_selectedCity != null) {
+                  await userProvider.updateProfile({
+                    'default_city': _selectedCity,
+                  });
+                  if (mounted) {
+                    Navigator.pop(context);
+                    _loadWeather();
+                  }
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   String _getWeatherIcon(String? weatherMain) {
