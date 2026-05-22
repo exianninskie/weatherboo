@@ -130,8 +130,29 @@ class UserProvider with ChangeNotifier {
       _profilePictureUrl = profile?['profile_picture_url'];
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      // If profile doesn't exist, create it
+      if (e.toString().contains('PGRST116') || e.toString().contains('not found')) {
+        try {
+          final success = await _supabaseService.updateUserProfile(_userId!, {
+            'display_name': _email?.split('@')[0] ?? 'User',
+            'email': _email,
+            'default_city': 'New York',
+            'temperature_unit': 'Celsius',
+            'notifications_enabled': true,
+          });
+          if (success) {
+            final newProfile = await _supabaseService.getUserProfile(_userId!);
+            _userProfile = newProfile;
+            notifyListeners();
+          }
+        } catch (createError) {
+          _error = createError.toString();
+          notifyListeners();
+        }
+      } else {
+        _error = e.toString();
+        notifyListeners();
+      }
     }
   }
 
