@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/custom_logo.dart';
 import '../providers/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -81,11 +80,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CustomLogo(
-                      size: MediaQuery.of(context).size.width * 0.28,
-                      showFull: true,
-                    ),
-                    const SizedBox(height: 32),
                     Text(
                       'Welcome back, cutie! ♡',
                       style: theme.textTheme.headlineMedium,
