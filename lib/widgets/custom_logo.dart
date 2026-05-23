@@ -36,7 +36,7 @@ class CustomLogo extends StatelessWidget {
           ),
           SizedBox(height: size * 0.04),
           Text(
-            'kawaii forecasts, just for you ♡',
+            'kawaii forecasts, just for you',
             style: AppTypography.brandSubtitle(size * 0.075),
             textAlign: TextAlign.center,
           ),
