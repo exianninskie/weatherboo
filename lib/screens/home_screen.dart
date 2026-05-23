@@ -409,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     forecast['day'],
-                    style: AppTypography.label(12, weight: FontWeight.w600),
+                    style: AppTypography.label(12),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
