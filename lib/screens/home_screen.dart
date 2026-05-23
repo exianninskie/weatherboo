@@ -386,36 +386,49 @@ class _HomeScreenState extends State<HomeScreen> {
       if (dailyForecasts.length >= 7) break;
     }
 
-    return Column(
-      children: dailyForecasts.map((forecast) {
-        final temp = forecast['temp'];
-        final displayTemp = temperatureUnit == 'Fahrenheit' ? (temp * 9/5 + 32).round() : temp.round();
+    return SizedBox(
+      height: 120,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: dailyForecasts.length,
+        itemBuilder: (context, index) {
+          final forecast = dailyForecasts[index];
+          final temp = forecast['temp'];
+          final displayTemp = temperatureUnit == 'Fahrenheit' ? (temp * 9/5 + 32).round() : temp.round();
 
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  forecast['day'],
-                  style: AppTypography.body(16, weight: FontWeight.w600),
-                ),
-                Text(
-                  _getWeatherIcon(forecast['weather']),
-                  style: const TextStyle(fontSize: 32),
-                ),
-                Text(
-                  '$displayTemp°',
-                  style: AppTypography.headline(20, color: AppColors.sakuraDeep),
-                ),
-              ],
+          return Card(
+            elevation: 2,
+            margin: EdgeInsets.only(
+              right: index < dailyForecasts.length - 1 ? 12 : 0,
             ),
-          ),
-        );
-      }).toList(),
+            child: Container(
+              width: 80,
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    forecast['day'],
+                    style: AppTypography.label(12, weight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _getWeatherIcon(forecast['weather']),
+                    style: const TextStyle(fontSize: 28),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$displayTemp°',
+                    style: AppTypography.body(14, weight: FontWeight.w600, color: AppColors.sakuraDeep),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
