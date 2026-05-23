@@ -387,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return SizedBox(
-      height: 120,
+      height: 140,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: dailyForecasts.length,
@@ -402,26 +402,26 @@ class _HomeScreenState extends State<HomeScreen> {
               right: index < dailyForecasts.length - 1 ? 12 : 0,
             ),
             child: Container(
-              width: 80,
-              padding: const EdgeInsets.all(12),
+              width: 100,
+              padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     forecast['day'],
-                    style: AppTypography.label(12),
+                    style: AppTypography.label(14),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     _getWeatherIcon(forecast['weather']),
-                    style: const TextStyle(fontSize: 28),
+                    style: const TextStyle(fontSize: 32),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     '$displayTemp°',
-                    style: AppTypography.body(14, weight: FontWeight.w600, color: AppColors.sakuraDeep),
+                    style: AppTypography.body(16, weight: FontWeight.w600, color: AppColors.sakuraDeep),
                   ),
                 ],
               ),
