@@ -209,25 +209,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               'Today',
-                              style: AppTypography.body(14, color: AppColors.textMuted),
+                              style: AppTypography.body(14, color: Colors.white),
                             ),
                             const SizedBox(height: 16),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: AppColors.mint.withValues(alpha: 0.3),
+                                color: Colors.black.withValues(alpha: 0.35),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.refresh, size: 16, color: AppColors.sakuraDeep),
+                                  const Icon(Icons.refresh, size: 16, color: Colors.white),
                                   const SizedBox(width: 4),
                                   GestureDetector(
                                     onTap: _loadWeather,
                                     child: Text(
                                       'Refresh',
-                                      style: AppTypography.label(12, color: AppColors.sakuraDeep),
+                                      style: AppTypography.label(12, color: Colors.white),
                                     ),
                                   ),
                                 ],
@@ -235,12 +235,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 72),
                         _buildTodayWeatherCard(temperatureUnit),
                         const SizedBox(height: 32),
                         Text(
                           'Weekly Forecast',
-                          style: AppTypography.headline(20),
+                          style: AppTypography.headline(20, color: Colors.white),
                         ),
                         const SizedBox(height: 16),
                         _buildWeeklyForecast(temperatureUnit),
@@ -273,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Card(
       elevation: 4,
-      color: Colors.black.withValues(alpha: 0.5),
+      color: Colors.black.withValues(alpha: 0.7),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -312,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             Text(
               weatherDescription[0].toUpperCase() + weatherDescription.substring(1),
-              style: AppTypography.body(16, color: Colors.white70),
+              style: AppTypography.body(16, color: Colors.white),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
@@ -350,16 +350,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.sakura, size: 24),
+        Icon(icon, color: Colors.white, size: 24),
         const SizedBox(height: 8),
         Text(
           label,
-          style: AppTypography.label(12),
+          style: AppTypography.label(12, color: Colors.white),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: AppTypography.body(14, weight: FontWeight.w600),
+          style: AppTypography.body(14, weight: FontWeight.w600, color: Colors.white),
         ),
       ],
     );
@@ -401,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return Card(
             elevation: 2,
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: 0.7),
             margin: EdgeInsets.only(
               right: index < dailyForecasts.length - 1 ? 12 : 0,
             ),
