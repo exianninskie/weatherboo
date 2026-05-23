@@ -136,12 +136,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
 
           return ResponsiveCenter(
-            padding: const EdgeInsets.fromLTRB(16, 88, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 100, 16, 16),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const SizedBox(height: 350),
                   _buildProfileHeader(userProvider),
                   const SizedBox(height: 24),
                   _buildProfileForm(userProvider),
@@ -159,70 +160,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildProfileHeader(UserProvider userProvider) {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: _pickProfileImage,
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: AppColors.primaryBlue,
-                    backgroundImage: _profileImage != null
-                        ? FileImage(_profileImage!)
-                        : (userProvider.profilePictureUrl != null
-                            ? NetworkImage(userProvider.profilePictureUrl!) as ImageProvider
-                            : null),
-                    child: _profileImage == null && userProvider.profilePictureUrl == null
-                        ? Text(
-                            (_displayNameController.text.isNotEmpty 
-                                ? _displayNameController.text[0].toUpperCase()
-                                : 'U'),
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.onPrimary,
-                            ),
-                          )
-                        : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryBlue,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: AppColors.ivory,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Tap to change photo',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.muted,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ],
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildProfileForm(UserProvider userProvider) {
@@ -244,18 +182,70 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _displayNameController,
-                decoration: _fieldDecoration(
-                  labelText: 'Display Name',
-                  prefixIcon: Icons.person,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a display name';
-                  }
-                  return null;
-                },
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: _pickProfileImage,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: AppColors.primaryBlue,
+                          backgroundImage: _profileImage != null
+                              ? FileImage(_profileImage!)
+                              : (userProvider.profilePictureUrl != null
+                                  ? NetworkImage(userProvider.profilePictureUrl!) as ImageProvider
+                                  : null),
+                          child: _profileImage == null && userProvider.profilePictureUrl == null
+                              ? Text(
+                                  (_displayNameController.text.isNotEmpty 
+                                      ? _displayNameController.text[0].toUpperCase()
+                                      : 'U'),
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.onPrimary,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryBlue,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: AppColors.ivory,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _displayNameController,
+                      decoration: _fieldDecoration(
+                        labelText: 'Display Name',
+                        prefixIcon: Icons.person,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a display name';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               TextFormField(
