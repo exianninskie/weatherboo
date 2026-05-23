@@ -269,6 +269,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'Notifications',
                             profile?['notifications_enabled'] == true ? 'Enabled' : 'Disabled',
                           ),
+                          const Divider(height: 24),
+                          _buildPreferenceRow(
+                            Icons.email,
+                            'Email Notifications',
+                            profile?['email_notifications_enabled'] == true ? 'Enabled' : 'Disabled',
+                          ),
+                          const Divider(height: 24),
+                          _buildPreferenceRow(
+                            Icons.desktop_windows,
+                            'Desktop Notifications',
+                            profile?['desktop_notifications_enabled'] == true ? 'Enabled' : 'Disabled',
+                          ),
                         ],
                       ),
                     ),

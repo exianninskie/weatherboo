@@ -25,6 +25,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   
   bool _isLoading = false;
   bool _notificationsEnabled = true;
+  bool _emailNotificationsEnabled = true;
+  bool _desktopNotificationsEnabled = true;
   String _temperatureUnit = 'Celsius';
   File? _profileImage;
   final ImagePicker _imagePicker = ImagePicker();
@@ -97,6 +99,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _bioController.text = profile['bio'] ?? '';
       _cityController.text = profile['default_city'] ?? '';
       _notificationsEnabled = profile['notifications_enabled'] ?? true;
+      _emailNotificationsEnabled = profile['email_notifications_enabled'] ?? true;
+      _desktopNotificationsEnabled = profile['desktop_notifications_enabled'] ?? true;
       _temperatureUnit = profile['temperature_unit'] ?? 'Celsius';
     });
   }
@@ -322,6 +326,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _buildTemperatureUnitPreference(),
             const Divider(),
             _buildNotificationPreference(),
+            const Divider(),
+            _buildEmailNotificationPreference(),
+            const Divider(),
+            _buildDesktopNotificationPreference(),
           ],
         ),
       ),
@@ -403,6 +411,64 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  Widget _buildEmailNotificationPreference() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          const Icon(Icons.email, color: AppColors.primaryBlue, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Email Notifications',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.muted,
+              ),
+            ),
+          ),
+          Switch(
+            value: _emailNotificationsEnabled,
+            onChanged: (bool value) {
+              setState(() {
+                _emailNotificationsEnabled = value;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopNotificationPreference() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          const Icon(Icons.desktop_windows, color: AppColors.primaryBlue, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Desktop Notifications',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.muted,
+              ),
+            ),
+          ),
+          Switch(
+            value: _desktopNotificationsEnabled,
+            onChanged: (bool value) {
+              setState(() {
+                _desktopNotificationsEnabled = value;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _pickProfileImage() async {
     try {
       final XFile? image = await _imagePicker.pickImage(
@@ -468,6 +534,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'default_city': _cityController.text,
         'temperature_unit': _temperatureUnit,
         'notifications_enabled': _notificationsEnabled,
+        'email_notifications_enabled': _emailNotificationsEnabled,
+        'desktop_notifications_enabled': _desktopNotificationsEnabled,
       });
 
       if (success && mounted) {

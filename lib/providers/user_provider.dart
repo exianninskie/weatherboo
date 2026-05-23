@@ -149,6 +149,8 @@ class UserProvider with ChangeNotifier {
             'default_city': 'New York',
             'temperature_unit': 'Celsius',
             'notifications_enabled': true,
+            'email_notifications_enabled': true,
+            'desktop_notifications_enabled': true,
             'last_online': DateTime.now().toIso8601String(),
           });
           if (success) {
