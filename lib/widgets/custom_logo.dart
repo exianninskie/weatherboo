@@ -30,9 +30,11 @@ class CustomLogo extends StatelessWidget {
         ),
         if (showFull) ...[
           SizedBox(height: size * 0.1),
-          Text(
-            'Weatherboo',
-            style: AppTypography.brandTitle(size * 0.2),
+          Image.asset(
+            'assets/images/Background.png',
+            width: size * 0.8,
+            height: size * 0.2,
+            fit: BoxFit.contain,
           ),
           SizedBox(height: size * 0.04),
           Text(

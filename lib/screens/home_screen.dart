@@ -152,8 +152,13 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        flexibleSpace: Container(decoration: AppTheme.appBarGradient),
-        title: Text('Weatherboo', style: AppTypography.brandTitle(20)),
+        flexibleSpace: Container(
+          decoration: AppTheme.appBarGradient,
+          child: Image.asset(
+            'assets/images/Background.png',
+            fit: BoxFit.cover,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_outline),
