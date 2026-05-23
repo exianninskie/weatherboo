@@ -208,14 +208,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         Column(
                           children: [
                             Text(
-                              _currentCity,
-                              style: AppTypography.headline(28),
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
                               'Today',
                               style: AppTypography.body(14, color: AppColors.textMuted),
                             ),
@@ -277,13 +269,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final displayTemp = temperatureUnit == 'Fahrenheit' ? (temp * 9/5 + 32).round() : temp.round();
     final displayFeelsLike = temperatureUnit == 'Fahrenheit' ? (feelsLike * 9/5 + 32).round() : feelsLike.round();
+    final tempUnit = temperatureUnit == 'Fahrenheit' ? '°F' : '°C';
 
     return Card(
       elevation: 4,
+      color: Colors.black.withValues(alpha: 0.5),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
+            Text(
+              _currentCity,
+              style: AppTypography.headline(24, color: Colors.white),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+            const SizedBox(height: 16),
             Container(
               width: 100,
               height: 100,
@@ -304,13 +306,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              '$displayTemp°',
-              style: AppTypography.headline(56, color: AppColors.sakuraDeep),
+              '$displayTemp$tempUnit',
+              style: AppTypography.headline(56, color: Colors.white),
             ),
             const SizedBox(height: 8),
             Text(
               weatherDescription[0].toUpperCase() + weatherDescription.substring(1),
-              style: AppTypography.body(16),
+              style: AppTypography.body(16, color: Colors.white70),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
@@ -385,6 +387,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (dailyForecasts.length >= 7) break;
     }
 
+    final tempUnit = temperatureUnit == 'Fahrenheit' ? '°F' : '°C';
+
     return SizedBox(
       height: 140,
       child: ListView.builder(
@@ -397,6 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return Card(
             elevation: 2,
+            color: Colors.black.withValues(alpha: 0.5),
             margin: EdgeInsets.only(
               right: index < dailyForecasts.length - 1 ? 12 : 0,
             ),
@@ -408,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     forecast['day'],
-                    style: AppTypography.label(14),
+                    style: AppTypography.label(14, color: Colors.white),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
@@ -419,8 +424,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '$displayTemp°',
-                    style: AppTypography.body(16, weight: FontWeight.w600, color: AppColors.sakuraDeep),
+                    '$displayTemp$tempUnit',
+                    style: AppTypography.body(16, weight: FontWeight.w600, color: Colors.white),
                   ),
                 ],
               ),
