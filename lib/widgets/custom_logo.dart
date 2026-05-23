@@ -31,7 +31,7 @@ class CustomLogo extends StatelessWidget {
         if (showFull) ...[
           SizedBox(height: size * 0.1),
           Image.asset(
-            'assets/images/Background.png',
+            'assets/images/Weatherboo_logo_text.png',
             width: size * 0.8,
             height: size * 0.2,
             fit: BoxFit.contain,

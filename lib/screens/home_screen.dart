@@ -152,13 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        flexibleSpace: Container(
-          decoration: AppTheme.appBarGradient,
-          child: Image.asset(
-            'assets/images/Background.png',
-            fit: BoxFit.cover,
-          ),
-        ),
+        flexibleSpace: Container(decoration: AppTheme.appBarGradient),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_outline),
