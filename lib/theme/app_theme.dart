@@ -271,24 +271,17 @@ class KawaiiBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        DecoratedBox(
-          decoration: AppTheme.backgroundGradient,
-          child: SizedBox.expand(),
-        ),
-        Positioned(
-          top: -40,
-          right: -20,
-          child: _CloudBlob(size: 120, color: AppColors.sakura.withValues(alpha: 0.15)),
-        ),
-        Positioned(
-          top: 80,
-          left: -30,
-          child: _CloudBlob(size: 90, color: AppColors.sky.withValues(alpha: 0.2)),
-        ),
-        Positioned(
-          bottom: 100,
-          right: 40,
-          child: _CloudBlob(size: 70, color: AppColors.lavender.withValues(alpha: 0.18)),
+        Image.asset(
+          'assets/images/Background.png',
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            return DecoratedBox(
+              decoration: AppTheme.backgroundGradient,
+              child: SizedBox.expand(),
+            );
+          },
         ),
         child,
       ],
