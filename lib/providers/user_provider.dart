@@ -149,6 +149,7 @@ class UserProvider with ChangeNotifier {
             'default_city': 'New York',
             'temperature_unit': 'Celsius',
             'notifications_enabled': true,
+            'last_online': DateTime.now().toIso8601String(),
           });
           if (success) {
             final newProfile = await _supabaseService.getUserProfile(_userId!);
@@ -232,6 +233,64 @@ class UserProvider with ChangeNotifier {
       return false;
     } finally {
       _setLoading(false);
+    }
+  }
+
+  // Update last online timestamp
+  Future<void> updateLastOnline() async {
+    if (_userId == null) return;
+    
+    try {
+      await _supabaseService.updateUserProfile(_userId!, {
+        'last_online': DateTime.now().toIso8601String(),
+      });
+      if (_userProfile != null) {
+        _userProfile = {..._userProfile!, 'last_online': DateTime.now().toIso8601String()};
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silently fail for online status updates
+    }
+  }
+
+  // Get online status text based on last_online timestamp
+  String getOnlineStatus() {
+    final lastOnline = _userProfile?['last_online'];
+    if (lastOnline == null) return 'online';
+    
+    try {
+      final lastOnlineTime = DateTime.parse(lastOnline);
+      final now = DateTime.now();
+      final difference = now.difference(lastOnlineTime);
+      
+      if (difference.inMinutes < 5) {
+        return 'online';
+      } else if (difference.inMinutes < 60) {
+        return '${difference.inMinutes}m ago';
+      } else if (difference.inHours < 24) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return 'last online recently';
+      }
+    } catch (e) {
+      return 'online';
+    }
+  }
+
+  // Check if user is currently online (within 5 minutes)
+  bool get isOnline {
+    final lastOnline = _userProfile?['last_online'];
+    if (lastOnline == null) return true;
+    
+    try {
+      final lastOnlineTime = DateTime.parse(lastOnline);
+      final now = DateTime.now();
+      final difference = now.difference(lastOnlineTime);
+      return difference.inMinutes < 5;
+    } catch (e) {
+      return true;
     }
   }
 }

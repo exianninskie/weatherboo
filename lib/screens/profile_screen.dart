@@ -20,6 +20,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeProfile();
     });
+    _updateOnlineStatus();
+  }
+
+  void _updateOnlineStatus() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    userProvider.updateLastOnline();
+    // Update every 5 minutes
+    Future.delayed(const Duration(minutes: 5), () {
+      if (mounted) {
+        _updateOnlineStatus();
+      }
+    });
   }
 
   Future<void> _initializeProfile() async {
@@ -129,11 +141,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  displayName,
-                                  style: AppTypography.headline(20),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                Row(
+                                  children: [
+                                    Text(
+                                      displayName,
+                                      style: AppTypography.headline(20),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: userProvider.isOnline ? Colors.green : Colors.grey,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      userProvider.getOnlineStatus(),
+                                      style: AppTypography.body(12, color: AppColors.textMuted),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
