@@ -413,12 +413,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(
                     _getWeatherIcon(forecast['weather']),
-                    style: const TextStyle(fontSize: 32),
+                    style: const TextStyle(fontSize: 28),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(
                     '$displayTemp°',
                     style: AppTypography.body(16, weight: FontWeight.w600, color: AppColors.sakuraDeep),
