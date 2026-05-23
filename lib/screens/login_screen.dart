@@ -91,12 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: theme.textTheme.headlineMedium,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Sign in for cozy pastel weather vibes',
-                      style: theme.textTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
                     const SizedBox(height: 32),
                     TextField(
                       controller: _emailController,
