@@ -4,7 +4,10 @@ import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../services/weather_service.dart';
 import '../widgets/responsive_center.dart';
-import '../models/city_model.dart';
+import 'outfit_lifestyle_screen.dart';
+import 'mood_motivation_screen.dart';
+import 'social_community_screen.dart';
+import 'selfcare_wellness_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,8 +23,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   String _currentCity = 'New York';
-  bool _hasShownCityPrompt = false;
-  String? _selectedCity;
 
   @override
   void initState() {
@@ -50,12 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _forecast = forecast;
           _isLoading = false;
         });
-
-        // Show city prompt if default city is still 'New York' (database default)
-        if (!_hasShownCityPrompt && targetCity == 'New York') {
-          _hasShownCityPrompt = true;
-          _showCitySelectionDialog(userProvider);
-        }
       }
     } catch (e) {
       if (mounted) {
@@ -65,63 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
-  }
-
-  void _showCitySelectionDialog(UserProvider userProvider) {
-    setState(() => _selectedCity = 'New York');
-    
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Select Your Default City'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: DropdownButtonFormField<String>(
-              value: _selectedCity,
-              decoration: const InputDecoration(
-                labelText: 'Default City',
-                prefixIcon: Icon(Icons.location_city),
-              ),
-              items: CityLandmarks.cities.keys.toList().map((String city) {
-                return DropdownMenuItem<String>(
-                  value: city,
-                  child: Text(city),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setDialogState(() {
-                    _selectedCity = newValue;
-                  });
-                }
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (_selectedCity != null) {
-                  await userProvider.updateProfile({
-                    'default_city': _selectedCity,
-                  });
-                  if (mounted) {
-                    Navigator.pop(context);
-                    _loadWeather();
-                  }
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   String _getWeatherIcon(String? weatherMain) {
@@ -154,6 +92,80 @@ class _HomeScreenState extends State<HomeScreen> {
         automaticallyImplyLeading: false,
         flexibleSpace: Container(decoration: AppTheme.appBarGradient),
         actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.menu),
+            tooltip: 'Menu',
+            onSelected: (value) {
+              switch (value) {
+                case 'outfit':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const OutfitLifestyleScreen()),
+                  );
+                  break;
+                case 'mood':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MoodMotivationScreen()),
+                  );
+                  break;
+                case 'social':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SocialCommunityScreen()),
+                  );
+                  break;
+                case 'selfcare':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SelfCareWellnessScreen()),
+                  );
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'outfit',
+                child: Row(
+                  children: [
+                    Icon(Icons.checkroom_outlined, size: 20),
+                    SizedBox(width: 12),
+                    Text('Outfit & Lifestyle'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'mood',
+                child: Row(
+                  children: [
+                    Icon(Icons.psychology_outlined, size: 20),
+                    SizedBox(width: 12),
+                    Text('Mood & Motivation'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'social',
+                child: Row(
+                  children: [
+                    Icon(Icons.people_outline, size: 20),
+                    SizedBox(width: 12),
+                    Text('Social & Community'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'selfcare',
+                child: Row(
+                  children: [
+                    Icon(Icons.self_improvement_outlined, size: 20),
+                    SizedBox(width: 12),
+                    Text('Self-Care & Wellness'),
+                  ],
+                ),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.person_outline),
             onPressed: () => Navigator.pushNamed(context, '/profile'),
@@ -205,37 +217,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 100, 16, 16),
                     child: Column(
                       children: [
-                        Column(
-                          children: [
-                            Text(
-                              'Today',
-                              style: AppTypography.body(14, color: Colors.white),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.35),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.refresh, size: 16, color: Colors.white),
-                                  const SizedBox(width: 4),
-                                  GestureDetector(
-                                    onTap: _loadWeather,
-                                    child: Text(
-                                      'Refresh',
-                                      style: AppTypography.label(12, color: Colors.white),
-                                    ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.refresh, size: 16, color: Colors.white),
+                                const SizedBox(width: 4),
+                                GestureDetector(
+                                  onTap: _loadWeather,
+                                  child: Text(
+                                    'Refresh',
+                                    style: AppTypography.label(12, color: Colors.white),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 72),
+                        const SizedBox(height: 100),
                         _buildTodayWeatherCard(temperatureUnit),
                         const SizedBox(height: 32),
                         Text(
@@ -278,6 +284,11 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
+            Text(
+              'Today',
+              style: AppTypography.body(14, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
             Text(
               _currentCity,
               style: AppTypography.headline(24, color: Colors.white),
