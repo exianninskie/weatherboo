@@ -6,6 +6,7 @@ import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/constants.dart';
 import '../widgets/responsive_center.dart';
+import '../widgets/interactive_avatar.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -107,9 +108,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
+    return FloatingAvatarOverlay(
+      initialMessage: 'Halo! 👋 Welcome to Weatherboo!',
+      initiallyVisible: true,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
@@ -140,7 +144,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
 
           return ResponsiveCenter(
-            padding: const EdgeInsets.fromLTRB(16, 100, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -160,6 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         },
         ),
       ),
+    ),
     );
   }
 

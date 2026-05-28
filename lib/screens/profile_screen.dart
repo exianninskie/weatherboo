@@ -4,6 +4,7 @@ import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/constants.dart';
 import '../widgets/responsive_center.dart';
+import '../widgets/interactive_avatar.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -52,10 +53,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
+    return FloatingAvatarOverlay(
+      initialMessage: 'Halo! 👋 Welcome to Weatherboo!',
+      initiallyVisible: true,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
@@ -109,7 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           return SingleChildScrollView(
             child: ResponsiveCenter(
-              padding: const EdgeInsets.fromLTRB(16, 260, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
               child: Column(
                 children: [
                   // Profile Header
@@ -294,6 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
         ),
       ),
+    ),
     );
   }
 

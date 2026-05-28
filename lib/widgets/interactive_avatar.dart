@@ -232,7 +232,9 @@ class _FloatingAvatarOverlayState extends State<FloatingAvatarOverlay> {
 class _ChatDialog extends StatefulWidget {
   final VoidCallback onClose;
 
-  const _ChatDialog({required this.onClose});
+  const _ChatDialog({
+    required this.onClose,
+  });
 
   @override
   State<_ChatDialog> createState() => _ChatDialogState();
@@ -247,6 +249,17 @@ class _ChatDialogState extends State<_ChatDialog> {
     ),
   ];
 
+  final List<String> _responses = [
+    'That\'s a great question! ☀️',
+    'I\'m here to help with your weather needs! 🌤️',
+    'How can I assist you today? 🌈',
+    'The weather is looking lovely! ☁️',
+    'Stay cozy and warm! 🧣',
+    'Don\'t forget your umbrella! ☔',
+    'Have a wonderful day! ✨',
+    'Weatherboo is always happy to chat! 💖',
+  ];
+
   @override
   void dispose() {
     _messageController.dispose();
@@ -256,37 +269,26 @@ class _ChatDialogState extends State<_ChatDialog> {
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
 
+    final userMessage = _messageController.text;
     setState(() {
       _messages.add(ChatMessage(
-        text: _messageController.text,
+        text: userMessage,
         isUser: true,
       ));
       _messageController.clear();
-
-      // Simulate avatar response
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          setState(() {
-            _messages.add(ChatMessage(
-              text: _getRandomResponse(),
-              isUser: false,
-            ));
-          });
-        }
-      });
     });
-  }
 
-  String _getRandomResponse() {
-    final responses = [
-      'Thanks for your message! ☁️',
-      'The weather is sunny today, stay positive!',
-      'How can I help you?',
-      'Don\'t forget to bring an umbrella if it rains! ☔',
-      'Have a great day!',
-      'I\'m here to help you!',
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
+    // Simulate a brief delay for natural feel
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _messages.add(ChatMessage(
+            text: _responses[(DateTime.now().millisecondsSinceEpoch) % _responses.length],
+            isUser: false,
+          ));
+        });
+      }
+    });
   }
 
   @override

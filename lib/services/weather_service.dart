@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../utils/constants.dart';
 
 class WeatherService {
-  static const String _apiKey = '26d3bfd8976b6ab0128e45b5039d2e72';
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
 
   // Get current weather for a city
   Future<Map<String, dynamic>?> getCurrentWeather(String city) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/weather?q=$city&appid=$_apiKey&units=metric'),
+        Uri.parse('$_baseUrl/weather?q=$city&appid=${AppConstants.weatherApiKey}&units=metric'),
       );
 
       if (response.statusCode == 200) {
@@ -25,7 +25,7 @@ class WeatherService {
   Future<Map<String, dynamic>?> get5DayForecast(String city) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/forecast?q=$city&appid=$_apiKey&units=metric'),
+        Uri.parse('$_baseUrl/forecast?q=$city&appid=${AppConstants.weatherApiKey}&units=metric'),
       );
 
       if (response.statusCode == 200) {
@@ -43,7 +43,7 @@ class WeatherService {
     try {
       final response = await http.get(
         Uri.parse(
-            '$_baseUrl/weather?lat=$lat&lon=$lon&appid=$_apiKey&units=metric'),
+            '$_baseUrl/weather?lat=$lat&lon=$lon&appid=${AppConstants.weatherApiKey}&units=metric'),
       );
 
       if (response.statusCode == 200) {

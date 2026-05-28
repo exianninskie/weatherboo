@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../services/weather_service.dart';
 import '../widgets/responsive_center.dart';
+import '../widgets/interactive_avatar.dart';
 import 'outfit_lifestyle_screen.dart';
 import 'mood_motivation_screen.dart';
 import 'social_community_screen.dart';
@@ -86,9 +87,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
+    return FloatingAvatarOverlay(
+      initialMessage: 'Halo! 👋 Welcome to Weatherboo!',
+      initiallyVisible: true,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
         automaticallyImplyLeading: false,
         flexibleSpace: Container(decoration: AppTheme.appBarGradient),
         actions: [
@@ -260,6 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
+    ),
     );
   }
 
