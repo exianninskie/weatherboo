@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
+import '../services/supabase_service.dart';
 import '../services/weather_service.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
@@ -16,13 +18,18 @@ class SocialCommunityScreen extends StatefulWidget {
 
 class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
   final WeatherService _weatherService = WeatherService();
+  final SupabaseService _supabaseService = SupabaseService();
   Map<String, dynamic>? _currentWeather;
   bool _isLoading = true;
   String? _errorMessage;
   String _currentCity = 'New York';
-  List<Map<String, dynamic>> _sharedMoments = [];
   List<Map<String, dynamic>> _communityPosts = [];
   List<Map<String, dynamic>> _weatherBuddies = [];
+  final Map<String, List<Map<String, dynamic>>> _buddyComments = {};
+  final Map<String, String?> _commentAuthorAvatars = {};
+  StreamSubscription<List<Map<String, dynamic>>>? _communityPostsSubscription;
+  StreamSubscription<List<Map<String, dynamic>>>? _onlineBuddiesSubscription;
+  StreamSubscription<List<Map<String, dynamic>>>? _buddyCommentsSubscription;
   final TextEditingController _momentController = TextEditingController();
 
   @override
@@ -33,6 +40,10 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
 
   @override
   void dispose() {
+    _communityPostsSubscription?.cancel();
+    _onlineBuddiesSubscription?.cancel();
+    _buddyCommentsSubscription?.cancel();
+    _setUserPresence(false);
     _momentController.dispose();
     super.dispose();
   }
@@ -49,10 +60,12 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
     });
 
     try {
-      final currentWeather = await _weatherService.getCurrentWeather(targetCity);
-      await _loadSharedMoments();
-      await _loadCommunityPosts();
-      await _loadWeatherBuddies();
+      final currentWeather =
+          await _weatherService.getCurrentWeather(targetCity);
+      await _setUserPresence(true);
+      _subscribeCommunityPosts();
+      _subscribeOnlineBuddies();
+      _subscribeBuddyComments();
 
       if (mounted) {
         setState(() {
@@ -72,129 +85,166 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
     }
   }
 
-  Future<void> _loadSharedMoments() async {
-    final prefs = await SharedPreferences.getInstance();
-    final momentsData = prefs.getStringList('shared_moments') ?? [];
-    setState(() {
-      _sharedMoments = momentsData.map((entry) {
-        final parts = entry.split('|');
-        return {
-          'moment': parts[0],
-          'weather': parts[1],
-          'timestamp': DateTime.parse(parts[2]),
-        };
-      }).toList();
+  void _subscribeCommunityPosts() {
+    _communityPostsSubscription?.cancel();
+    _communityPostsSubscription =
+        _supabaseService.streamCommunityPosts().listen((posts) {
+      setState(() {
+        _communityPosts = posts.map((post) {
+          final createdAt = post['created_at'];
+          return {
+            ...post,
+            'created_at':
+                createdAt is String ? DateTime.parse(createdAt) : createdAt,
+            'timestamp':
+                createdAt is String ? DateTime.parse(createdAt) : createdAt,
+            'user': post['display_name'] ?? 'You',
+          };
+        }).toList();
+      });
+    }, onError: (error) {
+      debugPrint('Community posts stream error: $error');
     });
   }
 
-  Future<void> _loadCommunityPosts() async {
-    // Simulated community posts based on weather
-    final posts = <Map<String, dynamic>>[];
-    final now = DateTime.now();
-    
-    posts.addAll([
-      {
-        'user': 'SunnySarah',
-        'avatar': '🌸',
-        'content': 'Perfect day for a picnic! The weather is absolutely lovely today!',
-        'weather': 'clear',
-        'likes': 24,
-        'timestamp': now.subtract(const Duration(hours: 2)),
-      },
-      {
-        'user': 'RainyRiley',
-        'avatar': '🌧️',
-        'content': 'Cozy coffee shop vibes while it rains outside. Best feeling ever!',
-        'weather': 'rain',
-        'likes': 18,
-        'timestamp': now.subtract(const Duration(hours: 4)),
-      },
-      {
-        'user': 'CloudyChris',
-        'avatar': '☁️',
-        'content': 'Overcast days are perfect for reading and relaxing indoors.',
-        'weather': 'clouds',
-        'likes': 31,
-        'timestamp': now.subtract(const Duration(hours: 6)),
-      },
-    ]);
+  void _subscribeOnlineBuddies() {
+    _onlineBuddiesSubscription?.cancel();
+    _onlineBuddiesSubscription =
+        _supabaseService.streamOnlineUsers().listen((profiles) {
+      final currentUserId =
+          Provider.of<UserProvider>(context, listen: false).userId;
+      final buddies = profiles
+          .map((profile) => {
+                'id': profile['id'] as String?,
+                'name': profile['id'] == currentUserId
+                    ? 'You'
+                    : profile['display_name'] ??
+                        profile['email'] ??
+                        'Weather Buddy',
+                'avatarUrl': profile['profile_picture_url'] as String?,
+                'avatar': profile['profile_picture_url'] != null ? '👤' : '☁️',
+                'activity': profile['bio'] ??
+                    'Loves weather chats and checking the sky',
+                'status': profile['is_online'] == true ? 'Online' : 'Away',
+                'sharedInterests': <String>['Weather', 'Nature', 'Friends'],
+              })
+          .toList();
 
-    setState(() {
-      _communityPosts = posts;
+      buddies.sort((a, b) {
+        if (a['id'] == currentUserId) return -1;
+        if (b['id'] == currentUserId) return 1;
+        final nameA = (a['name'] as String?) ?? '';
+        final nameB = (b['name'] as String?) ?? '';
+        return nameA.compareTo(nameB);
+      });
+
+      setState(() {
+        _weatherBuddies = buddies;
+      });
+    }, onError: (error) {
+      debugPrint('Online buddies stream error: $error');
     });
   }
 
-  Future<void> _loadWeatherBuddies() async {
-    // Simulated weather buddies
-    final buddies = <Map<String, dynamic>>[];
-    
-    buddies.addAll([
-      {
-        'name': 'Alex',
-        'avatar': '🎨',
-        'activity': 'Indoor painting sessions on rainy days',
-        'status': 'online',
-        'sharedInterests': ['Art', 'Coffee', 'Reading'],
-      },
-      {
-        'name': 'Jordan',
-        'avatar': '🏃',
-        'activity': 'Morning jogs when it\'s sunny',
-        'status': 'away',
-        'sharedInterests': ['Fitness', 'Nature', 'Photography'],
-      },
-      {
-        'name': 'Taylor',
-        'avatar': '📚',
-        'activity': 'Book club meetups on cloudy days',
-        'status': 'online',
-        'sharedInterests': ['Books', 'Tea', 'Writing'],
-      },
-    ]);
+  void _subscribeBuddyComments() {
+    _buddyCommentsSubscription?.cancel();
+    _buddyCommentsSubscription =
+        _supabaseService.streamBuddyComments().listen((comments) async {
+      final grouped = <String, List<Map<String, String>>>{};
+      final authorIds = <String>{};
 
-    setState(() {
-      _weatherBuddies = buddies;
+      for (final comment in comments) {
+        final recipientId = comment['recipient_id'] as String?;
+        final authorId = comment['author_id'] as String?;
+        if (recipientId == null || authorId == null) {
+          continue;
+        }
+
+        grouped.putIfAbsent(recipientId, () => []).add({
+          'id': comment['id']?.toString() ?? '',
+          'authorId': authorId,
+          'author': comment['author_name'] as String? ?? 'You',
+          'text': comment['text'] as String? ?? '',
+          'timestamp': comment['created_at'] as String? ?? '',
+          'replyToText': comment['reply_to_text'] as String? ?? '',
+        });
+        authorIds.add(authorId);
+      }
+
+      for (final commentsForBuddy in grouped.values) {
+        commentsForBuddy.sort((a, b) {
+          final aTime = _parseTimestamp(a['timestamp']);
+          final bTime = _parseTimestamp(b['timestamp']);
+          return bTime.compareTo(aTime);
+        });
+      }
+
+      try {
+        final avatarUrls =
+            await _supabaseService.getProfilePictureUrls(authorIds.toList());
+        if (mounted) {
+          setState(() {
+            _commentAuthorAvatars
+              ..clear()
+              ..addAll(avatarUrls);
+            _buddyComments
+              ..clear()
+              ..addAll(grouped);
+          });
+        }
+      } catch (e) {
+        debugPrint('Failed to load author avatars: $e');
+        if (mounted) {
+          setState(() {
+            _buddyComments
+              ..clear()
+              ..addAll(grouped);
+          });
+        }
+      }
+    }, onError: (error) {
+      debugPrint('Buddy comments stream error: $error');
     });
+  }
+
+  Future<void> _setUserPresence(bool isOnline) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userId = userProvider.userId;
+    if (userId == null) return;
+
+    try {
+      await _supabaseService.setUserPresence(userId, isOnline);
+    } catch (e) {
+      debugPrint('Failed to update presence: $e');
+    }
   }
 
   Future<void> _shareMoment() async {
     if (_momentController.text.trim().isEmpty) return;
 
-    final weatherMain = _currentWeather?['weather'][0]['main'] as String? ?? 'clear';
+    final weatherMain =
+        _currentWeather?['weather'][0]['main'] as String? ?? 'clear';
     final momentText = _momentController.text.trim();
-    final entry = '$momentText|$weatherMain|${DateTime.now().toIso8601String()}';
-    
-    final prefs = await SharedPreferences.getInstance();
-    final momentsData = prefs.getStringList('shared_moments') ?? [];
-    momentsData.add(entry);
-    
-    // Keep only last 20 entries
-    if (momentsData.length > 20) {
-      momentsData.removeAt(0);
-    }
-    
-    await prefs.setStringList('shared_moments', momentsData);
-    
-    // Add to community posts at the top (newest)
+
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final profile = userProvider.userProfile;
-    final userName = profile?['username'] ?? 'You';
-    
-    final newPost = {
-      'user': userName,
-      'avatar': '🌟',
-      'content': momentText,
-      'weather': weatherMain,
-      'likes': 0,
-      'timestamp': DateTime.now(),
-    };
-    
-    setState(() {
-      _communityPosts.insert(0, newPost);
-    });
-    
-    _momentController.clear();
-    await _loadSharedMoments();
+    final userId = userProvider.userId;
+    final displayName = profile?['display_name'] ?? 'You';
+
+    if (userId == null) return;
+
+    try {
+      await _supabaseService.createCommunityPost(
+        userId: userId,
+        displayName: displayName,
+        avatar: '🌟',
+        content: momentText,
+        weather: weatherMain,
+      );
+      _momentController.clear();
+    } catch (e) {
+      debugPrint('Failed to create community post: $e');
+    }
   }
 
   String _getWeatherCondition(String? weatherMain) {
@@ -202,32 +252,543 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
 
     final condition = weatherMain.toLowerCase();
     final conditionMapping = {
-      'clear sky': 'clear', 'clear': 'clear',
-      'few clouds': 'clouds', 'scattered clouds': 'clouds', 'broken clouds': 'clouds',
-      'overcast clouds': 'clouds', 'clouds': 'clouds', 'cloud': 'clouds',
-      'light rain': 'rain', 'moderate rain': 'rain', 'heavy intensity rain': 'rain',
-      'very heavy rain': 'rain', 'extreme rain': 'rain', 'freezing rain': 'rain',
-      'light intensity shower rain': 'rain', 'shower rain': 'rain',
-      'heavy intensity shower rain': 'rain', 'ragged shower rain': 'rain', 'rain': 'rain',
-      'light intensity drizzle': 'drizzle', 'drizzle': 'drizzle',
-      'heavy intensity drizzle': 'drizzle', 'light intensity drizzle rain': 'drizzle',
-      'drizzle rain': 'drizzle', 'heavy intensity drizzle rain': 'drizzle',
-      'shower rain and drizzle': 'drizzle', 'heavy shower rain and drizzle': 'drizzle',
+      'clear sky': 'clear',
+      'clear': 'clear',
+      'few clouds': 'clouds',
+      'scattered clouds': 'clouds',
+      'broken clouds': 'clouds',
+      'overcast clouds': 'clouds',
+      'clouds': 'clouds',
+      'cloud': 'clouds',
+      'light rain': 'rain',
+      'moderate rain': 'rain',
+      'heavy intensity rain': 'rain',
+      'very heavy rain': 'rain',
+      'extreme rain': 'rain',
+      'freezing rain': 'rain',
+      'light intensity shower rain': 'rain',
+      'shower rain': 'rain',
+      'heavy intensity shower rain': 'rain',
+      'ragged shower rain': 'rain',
+      'rain': 'rain',
+      'light intensity drizzle': 'drizzle',
+      'drizzle': 'drizzle',
+      'heavy intensity drizzle': 'drizzle',
+      'light intensity drizzle rain': 'drizzle',
+      'drizzle rain': 'drizzle',
+      'heavy intensity drizzle rain': 'drizzle',
+      'shower rain and drizzle': 'drizzle',
+      'heavy shower rain and drizzle': 'drizzle',
       'shower drizzle': 'drizzle',
-      'thunderstorm with light rain': 'thunderstorm', 'thunderstorm with rain': 'thunderstorm',
-      'thunderstorm with heavy rain': 'thunderstorm', 'light thunderstorm': 'thunderstorm',
-      'heavy thunderstorm': 'thunderstorm', 'ragged thunderstorm': 'thunderstorm',
-      'thunderstorm with light drizzle': 'thunderstorm', 'thunderstorm with drizzle': 'thunderstorm',
-      'thunderstorm with heavy drizzle': 'thunderstorm', 'thunderstorm': 'thunderstorm',
-      'light snow': 'snow', 'heavy snow': 'snow', 'sleet': 'snow',
-      'light shower sleet': 'snow', 'shower sleet': 'snow', 'rain and snow': 'snow',
-      'light rain and snow': 'snow', 'light shower snow': 'snow', 'shower snow': 'snow',
-      'heavy shower snow': 'snow', 'snow': 'snow',
-      'mist': 'mist', 'smoke': 'mist', 'haze': 'mist', 'dust': 'mist',
-      'fog': 'mist', 'sand': 'mist', 'ash': 'mist', 'squall': 'mist', 'tornado': 'mist',
+      'thunderstorm with light rain': 'thunderstorm',
+      'thunderstorm with rain': 'thunderstorm',
+      'thunderstorm with heavy rain': 'thunderstorm',
+      'light thunderstorm': 'thunderstorm',
+      'heavy thunderstorm': 'thunderstorm',
+      'ragged thunderstorm': 'thunderstorm',
+      'thunderstorm with light drizzle': 'thunderstorm',
+      'thunderstorm with drizzle': 'thunderstorm',
+      'thunderstorm with heavy drizzle': 'thunderstorm',
+      'thunderstorm': 'thunderstorm',
+      'light snow': 'snow',
+      'heavy snow': 'snow',
+      'sleet': 'snow',
+      'light shower sleet': 'snow',
+      'shower sleet': 'snow',
+      'rain and snow': 'snow',
+      'light rain and snow': 'snow',
+      'light shower snow': 'snow',
+      'shower snow': 'snow',
+      'heavy shower snow': 'snow',
+      'snow': 'snow',
+      'mist': 'mist',
+      'smoke': 'mist',
+      'haze': 'mist',
+      'dust': 'mist',
+      'fog': 'mist',
+      'sand': 'mist',
+      'ash': 'mist',
+      'squall': 'mist',
+      'tornado': 'mist',
     };
 
     return conditionMapping[condition] ?? condition;
+  }
+
+  String _getWeatherUsernamePrefix(String weatherMain) {
+    switch (weatherMain.toLowerCase()) {
+      case 'clear':
+        return 'Sunny';
+      case 'clouds':
+      case 'cloudy':
+        return 'Cloudy';
+      case 'rain':
+      case 'drizzle':
+        return 'Rainy';
+      case 'snow':
+        return 'Snowy';
+      case 'thunderstorm':
+        return 'Stormy';
+      case 'mist':
+      case 'fog':
+      case 'haze':
+        return 'Misty';
+      default:
+        return 'Weather';
+    }
+  }
+
+  String _formatCommunityUsername(String rawUsername, String weatherMain) {
+    if (rawUsername == 'You') return rawUsername;
+    final prefix = _getWeatherUsernamePrefix(weatherMain);
+    final lowerUsername = rawUsername.toLowerCase();
+    if (lowerUsername.startsWith(prefix.toLowerCase())) {
+      return rawUsername;
+    }
+    return '$prefix$rawUsername';
+  }
+
+  String _formatCommentText(String? text, String? replyToText) {
+    if (replyToText != null && replyToText.isNotEmpty) {
+      return '$replyToText > $text';
+    }
+    return text ?? '';
+  }
+
+  Future<void> _confirmDeleteBuddyComment(String commentId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete message'),
+          content: const Text('Are you sure you want to delete this message?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _supabaseService.deleteBuddyComment(commentId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Message deleted')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete message: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showBuddyCommentSheet(Map<String, dynamic> buddy) async {
+    final controller = TextEditingController();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Comment on ${buddy['name']}',
+                  style: AppTypography.headline(18)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: 'Write a kind comment...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                maxLines: 4,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.lavender,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  final text = controller.text.trim();
+                  if (text.isEmpty) return;
+                  final userProvider =
+                      Provider.of<UserProvider>(context, listen: false);
+                  final profile = userProvider.userProfile;
+                  final userId = userProvider.userId;
+                  final recipientId = buddy['id'] as String?;
+                  final authorName = profile?['display_name'] ?? 'You';
+                  if (userId != null && recipientId != null) {
+                    _supabaseService.createBuddyComment(
+                      recipientId: recipientId,
+                      authorId: userId,
+                      authorName: authorName,
+                      text: text,
+                    );
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Post Comment'),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showReplyCommentSheet(
+    String threadRecipientId,
+    String recipientName,
+    String originalCommentText,
+  ) async {
+    final controller = TextEditingController();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Reply to $recipientName',
+                  style: AppTypography.headline(18)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.lavender.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  originalCommentText,
+                  style: AppTypography.body(12, color: AppColors.textMuted),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: 'Write a reply...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                maxLines: 4,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.lavender,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  final text = controller.text.trim();
+                  if (text.isEmpty) return;
+                  final userProvider =
+                      Provider.of<UserProvider>(context, listen: false);
+                  final profile = userProvider.userProfile;
+                  final userId = userProvider.userId;
+                  final authorName = profile?['display_name'] ?? 'You';
+                  if (userId != null) {
+                    _supabaseService.createBuddyComment(
+                      recipientId: threadRecipientId,
+                      authorId: userId,
+                      authorName: authorName,
+                      text: text,
+                      replyToText: originalCommentText,
+                    );
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Post Reply'),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showAllBuddyCommentsSheet(
+    Map<String, dynamic> buddy,
+    List<Map<String, dynamic>> comments,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('All comments with ${buddy['name']}',
+                  style: AppTypography.headline(18)),
+              const SizedBox(height: 12),
+              ...comments.map((comment) {
+                final commentId = comment['id'] as String? ?? '';
+                final authorId = comment['authorId'];
+                final currentUserId =
+                    Provider.of<UserProvider>(context, listen: false).userId;
+                final authorAvatarUrl = authorId == currentUserId
+                    ? Provider.of<UserProvider>(context, listen: false)
+                        .profilePictureUrl
+                    : _commentAuthorAvatars[authorId ?? ''];
+                final authorName = comment['author'] ?? 'You';
+                final timestamp = comment['timestamp'];
+                final dateText = timestamp != null && timestamp.isNotEmpty
+                    ? _formatDate(_parseTimestamp(timestamp))
+                    : '';
+                final isCurrentUserCard = buddy['id'] == currentUserId;
+                final isOwnMessage = authorId == currentUserId;
+
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.lavender.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: AppColors.surfaceElevated,
+                            backgroundImage: authorAvatarUrl != null
+                                ? NetworkImage(authorAvatarUrl)
+                                : null,
+                            child: authorAvatarUrl == null
+                                ? Text(
+                                    authorName.isNotEmpty
+                                        ? authorName[0].toUpperCase()
+                                        : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.sakuraDeep,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  authorName,
+                                  style: AppTypography.body(12,
+                                      weight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _formatCommentText(comment['text'] as String?,
+                                      comment['replyToText'] as String?),
+                                  style: AppTypography.body(12),
+                                ),
+                                if (dateText.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    dateText,
+                                    style: AppTypography.body(11,
+                                        color: AppColors.textMuted),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (isCurrentUserCard || isOwnMessage) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (isOwnMessage)
+                              TextButton.icon(
+                                onPressed: commentId.isNotEmpty
+                                    ? () =>
+                                        _confirmDeleteBuddyComment(commentId)
+                                    : null,
+                                icon: const Icon(Icons.delete, size: 16),
+                                label: Text(
+                                  'Delete',
+                                  style:
+                                      AppTypography.body(12, color: Colors.red),
+                                ),
+                              ),
+                            if (isCurrentUserCard) ...[
+                              if (isOwnMessage) const SizedBox(width: 8),
+                              TextButton.icon(
+                                onPressed: () {
+                                  final threadRecipientId =
+                                      buddy['id'] as String?;
+                                  if (authorId != null &&
+                                      threadRecipientId != null) {
+                                    _showReplyCommentSheet(
+                                      threadRecipientId,
+                                      authorName,
+                                      comment['text'] ?? '',
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.reply, size: 16),
+                                label: Text(
+                                  'Reply',
+                                  style: AppTypography.body(12,
+                                      color: AppColors.sky),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }).toList(),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Map<String, dynamic>? _latestSharedMoment() {
+    final currentUserId =
+        Provider.of<UserProvider>(context, listen: false).userId;
+    if (currentUserId == null) return null;
+
+    for (final post in _communityPosts) {
+      if (post['user_id'] == currentUserId) return post;
+    }
+    return null;
+  }
+
+  DateTime _parseTimestamp(dynamic timestamp) {
+    if (timestamp is DateTime) return timestamp;
+    if (timestamp is String) return DateTime.parse(timestamp);
+    return DateTime.now();
+  }
+
+  List<Map<String, dynamic>> _getBuddyComments(String buddyId) {
+    return _buddyComments[buddyId] ?? [];
+  }
+
+  List<Map<String, dynamic>> _sortedWeatherBuddies() {
+    final currentUserId =
+        Provider.of<UserProvider>(context, listen: false).userId;
+    final sorted = List<Map<String, dynamic>>.from(_weatherBuddies);
+
+    sorted.sort((a, b) {
+      if (a['id'] == currentUserId) return -1;
+      if (b['id'] == currentUserId) return 1;
+
+      final aComments = _buddyComments[a['id'] as String? ?? ''] ?? [];
+      final bComments = _buddyComments[b['id'] as String? ?? ''] ?? [];
+      final aLatest = aComments.isNotEmpty
+          ? _parseTimestamp(aComments.first['timestamp'])
+          : DateTime.fromMillisecondsSinceEpoch(0);
+      final bLatest = bComments.isNotEmpty
+          ? _parseTimestamp(bComments.first['timestamp'])
+          : DateTime.fromMillisecondsSinceEpoch(0);
+
+      final timestampCompare = bLatest.compareTo(aLatest);
+      if (timestampCompare != 0) return timestampCompare;
+
+      final nameA = (a['name'] as String?) ?? '';
+      final nameB = (b['name'] as String?) ?? '';
+      return nameA.compareTo(nameB);
+    });
+
+    return sorted;
+  }
+
+  Future<void> _confirmDeleteCommunityPost(String postId) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Post'),
+          content: const Text('Are you sure you want to delete this post?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) return;
+
+    try {
+      await _supabaseService.deleteCommunityPost(postId);
+    } catch (e) {
+      debugPrint('Failed to delete community post: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to delete post. Please try again.')),
+        );
+      }
+    }
   }
 
   List<String> _getWeatherBasedActivities(String weatherCondition) {
@@ -319,7 +880,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: AppColors.sakuraDeep),
+            const Icon(Icons.error_outline,
+                size: 64, color: AppColors.sakuraDeep),
             const SizedBox(height: 16),
             Text(
               'Failed to load data',
@@ -362,6 +924,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
         children: [
           _buildWeatherHeader(temp, weatherMain),
           const SizedBox(height: 24),
+          _buildOnlineUsersRow(),
+          const SizedBox(height: 24),
           _buildWeatherSharingCard(),
           const SizedBox(height: 20),
           _buildCommunityVibesCard(),
@@ -377,7 +941,9 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
     final userProvider = Provider.of<UserProvider>(context);
     final profile = userProvider.userProfile;
     final temperatureUnit = profile?['temperature_unit'] ?? 'Celsius';
-    final displayTemp = temperatureUnit == 'Fahrenheit' ? (temp * 9/5 + 32).round() : temp.round();
+    final displayTemp = temperatureUnit == 'Fahrenheit'
+        ? (temp * 9 / 5 + 32).round()
+        : temp.round();
     final tempUnit = temperatureUnit == 'Fahrenheit' ? '°F' : '°C';
 
     return Card(
@@ -429,6 +995,118 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
     );
   }
 
+  Widget _buildOnlineUsersRow() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.mint.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(Icons.wifi, size: 28, color: AppColors.mint),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Online Weather Buddies',
+                        style: AppTypography.headline(18),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Everyone online right now',
+                        style:
+                            AppTypography.body(13, color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            if (_weatherBuddies.isEmpty)
+              Center(
+                child: Text(
+                  'No online buddies available yet.',
+                  style: AppTypography.body(14, color: AppColors.textMuted),
+                ),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _weatherBuddies.map((buddy) {
+                    final status = buddy['status'] as String? ?? 'Online';
+                    final avatarUrl = buddy['avatarUrl'] as String?;
+                    final name = buddy['name'] as String? ?? 'Buddy';
+                    final statusColor = status.toLowerCase() == 'online'
+                        ? AppColors.mint
+                        : AppColors.textMuted;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundColor: AppColors.surfaceElevated,
+                            backgroundImage: avatarUrl != null
+                                ? NetworkImage(avatarUrl)
+                                : null,
+                            child: avatarUrl == null
+                                ? Text(
+                                    name.isNotEmpty
+                                        ? name[0].toUpperCase()
+                                        : 'W',
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.sakuraDeep,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: 72,
+                            child: Text(
+                              name,
+                              style: AppTypography.body(12),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            status,
+                            style: AppTypography.body(11, color: statusColor),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _getWeatherIcon(String weatherMain) {
     switch (weatherMain.toLowerCase()) {
       case 'clear':
@@ -452,6 +1130,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
   }
 
   Widget _buildWeatherSharingCard() {
+    final latestUserPost = _latestSharedMoment();
+
     return Card(
       elevation: 4,
       child: Padding(
@@ -467,7 +1147,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                     color: AppColors.sakura.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(Icons.share_outlined, size: 28, color: AppColors.sakura),
+                  child: Icon(Icons.share_outlined,
+                      size: 28, color: AppColors.sakura),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -481,7 +1162,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Share cute weather moments with friends',
-                        style: AppTypography.body(13, color: AppColors.textMuted),
+                        style:
+                            AppTypography.body(13, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -511,16 +1193,16 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                 foregroundColor: Colors.white,
               ),
             ),
-            if (_sharedMoments.isNotEmpty) ...[
+            if (latestUserPost != null) ...[
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 12),
               Text(
-                'Your Shared Moments',
+                'Your Latest Shared Moment',
                 style: AppTypography.headline(16),
               ),
               const SizedBox(height: 12),
-              ..._sharedMoments.take(3).map((moment) => Padding(
+              Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -540,20 +1222,21 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            moment['moment'] as String,
+                            latestUserPost['content'] as String,
                             style: AppTypography.body(14),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${_getWeatherIcon(moment['weather'] as String)} ${_formatDate(moment['timestamp'] as DateTime)}',
-                            style: AppTypography.body(12, color: AppColors.textMuted),
+                            '${_getWeatherIcon(latestUserPost['weather'] as String)} ${_formatDate(_parseTimestamp(latestUserPost['created_at']))}',
+                            style: AppTypography.body(12,
+                                color: AppColors.textMuted),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-              )),
+              ),
             ],
           ],
         ),
@@ -577,7 +1260,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                     color: AppColors.sky.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(Icons.groups_outlined, size: 28, color: AppColors.sky),
+                  child: Icon(Icons.groups_outlined,
+                      size: 28, color: AppColors.sky),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -591,7 +1275,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'See how others enjoy the weather',
-                        style: AppTypography.body(13, color: AppColors.textMuted),
+                        style:
+                            AppTypography.body(13, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -602,64 +1287,82 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
             const Divider(),
             const SizedBox(height: 16),
             ..._communityPosts.take(3).map((post) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.sky.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.sky.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          post['avatar'] as String,
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                post['user'] as String,
-                                style: AppTypography.body(14, weight: FontWeight.w600),
+                        Row(
+                          children: [
+                            Text(
+                              post['avatar'] as String,
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _formatCommunityUsername(
+                                        post['user'] as String,
+                                        post['weather'] as String),
+                                    style: AppTypography.body(14,
+                                        weight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    _formatDate(post['timestamp'] as DateTime),
+                                    style: AppTypography.body(11,
+                                        color: AppColors.textMuted),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                _formatDate(post['timestamp'] as DateTime),
-                                style: AppTypography.body(11, color: AppColors.textMuted),
+                            ),
+                            if (post['user_id'] ==
+                                Provider.of<UserProvider>(context,
+                                        listen: false)
+                                    .userId) ...[
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                color: AppColors.sakuraDeep,
+                                tooltip: 'Delete post',
+                                onPressed: () => _confirmDeleteCommunityPost(
+                                    post['id'] as String),
                               ),
                             ],
-                          ),
+                            Text(
+                              '${_getWeatherIcon(post['weather'] as String)}',
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 8),
                         Text(
-                          '${_getWeatherIcon(post['weather'] as String)}',
-                          style: const TextStyle(fontSize: 20),
+                          post['content'] as String,
+                          style: AppTypography.body(14),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.favorite_outlined,
+                                size: 16, color: AppColors.sakura),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${post['likes']}',
+                              style: AppTypography.body(12,
+                                  color: AppColors.textMuted),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      post['content'] as String,
-                      style: AppTypography.body(14),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.favorite_outlined, size: 16, color: AppColors.sakura),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${post['likes']}',
-                          style: AppTypography.body(12, color: AppColors.textMuted),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            )),
+                  ),
+                )),
           ],
         ),
       ),
@@ -682,7 +1385,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                     color: AppColors.lavender.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(Icons.diversity_3_outlined, size: 28, color: AppColors.lavender),
+                  child: Icon(Icons.diversity_3_outlined,
+                      size: 28, color: AppColors.lavender),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -696,7 +1400,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Connect for weather-based activities',
-                        style: AppTypography.body(13, color: AppColors.textMuted),
+                        style:
+                            AppTypography.body(13, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -714,13 +1419,16 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: activities.map((activity) => Chip(
-                label: Text(
-                  activity,
-                  style: AppTypography.body(12),
-                ),
-                backgroundColor: AppColors.lavender.withValues(alpha: 0.15),
-              )).toList(),
+              children: activities
+                  .map((activity) => Chip(
+                        label: Text(
+                          activity,
+                          style: AppTypography.body(12),
+                        ),
+                        backgroundColor:
+                            AppColors.lavender.withValues(alpha: 0.15),
+                      ))
+                  .toList(),
             ),
             const SizedBox(height: 20),
             Text(
@@ -728,74 +1436,283 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
               style: AppTypography.headline(16),
             ),
             const SizedBox(height: 12),
-            ..._weatherBuddies.map((buddy) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.lavender.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      buddy['avatar'] as String,
-                      style: const TextStyle(fontSize: 32),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            ..._sortedWeatherBuddies().map((buddy) {
+              final comments = _getBuddyComments(buddy['id'] as String? ?? '');
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.lavender.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                buddy['name'] as String,
-                                style: AppTypography.body(14, weight: FontWeight.w600),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: buddy['status'] == 'online' ? AppColors.mint : Colors.grey,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ],
+                          CircleAvatar(
+                            radius: 26,
+                            backgroundColor: AppColors.surfaceElevated,
+                            backgroundImage: buddy['avatarUrl'] != null
+                                ? NetworkImage(buddy['avatarUrl'] as String)
+                                : null,
+                            child: buddy['avatarUrl'] == null
+                                ? Text(
+                                    (buddy['name'] as String).isNotEmpty
+                                        ? (buddy['name'] as String)[0]
+                                            .toUpperCase()
+                                        : 'W',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.sakuraDeep,
+                                    ),
+                                  )
+                                : null,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            buddy['activity'] as String,
-                            style: AppTypography.body(12, color: AppColors.textMuted),
-                          ),
-                          const SizedBox(height: 4),
-                          Wrap(
-                            spacing: 4,
-                            children: (buddy['sharedInterests'] as List<String>)
-                                .map((interest) => Chip(
-                                      label: Text(
-                                        interest,
-                                        style: AppTypography.body(10),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        buddy['name'] as String,
+                                        style: AppTypography.body(14,
+                                            weight: FontWeight.w600),
                                       ),
-                                      visualDensity: VisualDensity.compact,
-                                      padding: EdgeInsets.zero,
-                                    ))
-                                .toList(),
+                                    ),
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: buddy['status'] == 'online'
+                                            ? AppColors.mint
+                                            : Colors.grey,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  buddy['activity'] as String,
+                                  style: AppTypography.body(12,
+                                      color: AppColors.textMuted),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: (buddy['sharedInterests']
+                                          as List<String>)
+                                      .map((interest) => Chip(
+                                            label: Text(
+                                              interest,
+                                              style: AppTypography.body(10),
+                                            ),
+                                            visualDensity:
+                                                VisualDensity.compact,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 0),
+                                            backgroundColor: AppColors.lavender
+                                                .withValues(alpha: 0.12),
+                                          ))
+                                      .toList(),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chat_bubble_outline),
-                      onPressed: () {
-                        // TODO: Implement chat functionality
-                      },
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          if (buddy['id'] !=
+                              Provider.of<UserProvider>(context, listen: false)
+                                  .userId) ...[
+                            TextButton.icon(
+                              icon: const Icon(Icons.chat_bubble_outline),
+                              label: Text(
+                                'Comment',
+                                style: AppTypography.body(12),
+                              ),
+                              onPressed: () => _showBuddyCommentSheet(buddy),
+                            ),
+                            if (comments.isNotEmpty) ...[
+                              const SizedBox(width: 12),
+                            ],
+                          ],
+                          if (comments.isNotEmpty)
+                            Text(
+                              '${comments.length} comment${comments.length > 1 ? 's' : ''}',
+                              style: AppTypography.body(12,
+                                  color: AppColors.textMuted),
+                            ),
+                        ],
+                      ),
+                      if (comments.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        ...comments.take(1).map((comment) {
+                          final commentId = comment['id'] as String? ?? '';
+                          final authorId = comment['authorId'];
+                          final currentUserId =
+                              Provider.of<UserProvider>(context, listen: false)
+                                  .userId;
+                          final authorAvatarUrl = authorId == currentUserId
+                              ? Provider.of<UserProvider>(context,
+                                      listen: false)
+                                  .profilePictureUrl
+                              : _commentAuthorAvatars[authorId ?? ''];
+                          final authorName = comment['author'] ?? 'You';
+                          final timestamp = comment['timestamp'];
+                          final dateText =
+                              timestamp != null && timestamp.isNotEmpty
+                                  ? _formatDate(_parseTimestamp(timestamp))
+                                  : '';
+                          final isCurrentUserCard =
+                              buddy['id'] == currentUserId;
+                          final isOwnMessage = authorId == currentUserId;
+
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.lavender.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor:
+                                          AppColors.surfaceElevated,
+                                      backgroundImage: authorAvatarUrl != null
+                                          ? NetworkImage(authorAvatarUrl)
+                                          : null,
+                                      child: authorAvatarUrl == null
+                                          ? Text(
+                                              authorName.isNotEmpty
+                                                  ? authorName[0].toUpperCase()
+                                                  : 'U',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.sakuraDeep,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            authorName,
+                                            style: AppTypography.body(12,
+                                                weight: FontWeight.w600),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _formatCommentText(
+                                                comment['text'] as String?,
+                                                comment['replyToText']
+                                                    as String?),
+                                            style: AppTypography.body(12),
+                                          ),
+                                          if (dateText.isNotEmpty) ...[
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              dateText,
+                                              style: AppTypography.body(11,
+                                                  color: AppColors.textMuted),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (isCurrentUserCard || isOwnMessage) ...[
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      if (isOwnMessage)
+                                        TextButton.icon(
+                                          onPressed: commentId.isNotEmpty
+                                              ? () =>
+                                                  _confirmDeleteBuddyComment(
+                                                      commentId)
+                                              : null,
+                                          icon: const Icon(Icons.delete,
+                                              size: 16),
+                                          label: Text(
+                                            'Delete',
+                                            style: AppTypography.body(12,
+                                                color: Colors.red),
+                                          ),
+                                        ),
+                                      if (isCurrentUserCard) ...[
+                                        if (isOwnMessage)
+                                          const SizedBox(width: 8),
+                                        TextButton.icon(
+                                          onPressed: () {
+                                            final threadRecipientId =
+                                                buddy['id'] as String?;
+                                            if (authorId != null &&
+                                                threadRecipientId != null) {
+                                              _showReplyCommentSheet(
+                                                threadRecipientId,
+                                                authorName,
+                                                comment['text'] ?? '',
+                                              );
+                                            }
+                                          },
+                                          icon:
+                                              const Icon(Icons.reply, size: 16),
+                                          label: Text(
+                                            'Reply',
+                                            style: AppTypography.body(12,
+                                                color: AppColors.sky),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }),
+                        if (comments.length > 1)
+                          TextButton(
+                            onPressed: () =>
+                                _showAllBuddyCommentsSheet(buddy, comments),
+                            child: Text(
+                              'View all comments',
+                              style:
+                                  AppTypography.body(12, color: AppColors.sky),
+                            ),
+                          ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-            )),
+              );
+            }),
           ],
         ),
       ),
