@@ -3,7 +3,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/home_screen.dart';
@@ -37,9 +36,8 @@ class WeatherbooApp extends StatelessWidget {
         title: 'Weatherboo',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.kawaii,
-        initialRoute: '/splash',
+        initialRoute: '/login',
         routes: {
-          '/splash': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
           '/signup': (context) => const SignupScreen(),
           '/home': (context) => const HomeScreen(),
