@@ -8,6 +8,7 @@ import '../services/supabase_service.dart';
 import '../services/weather_service.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
+import '../widgets/user_role_badge.dart';
 
 class SocialCommunityScreen extends StatefulWidget {
   const SocialCommunityScreen({super.key});
@@ -626,10 +627,23 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  authorName,
-                                  style: AppTypography.body(12,
-                                      weight: FontWeight.w600),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        authorName,
+                                        style: AppTypography.body(12,
+                                            weight: FontWeight.w600),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    UserRoleBadge(
+                                      displayName: authorName,
+                                      profilePictureUrl: authorAvatarUrl,
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -1308,12 +1322,24 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    _formatCommunityUsername(
-                                        post['user'] as String,
-                                        post['weather'] as String),
-                                    style: AppTypography.body(14,
-                                        weight: FontWeight.w600),
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          _formatCommunityUsername(
+                                              post['user'] as String,
+                                              post['weather'] as String),
+                                          style: AppTypography.body(14,
+                                              weight: FontWeight.w600),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      UserRoleBadge(
+                                        displayName: post['user'] as String,
+                                      ),
+                                    ],
                                   ),
                                   Text(
                                     _formatDate(post['timestamp'] as DateTime),
@@ -1478,11 +1504,26 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Expanded(
-                                      child: Text(
-                                        buddy['name'] as String,
-                                        style: AppTypography.body(14,
-                                            weight: FontWeight.w600),
+                                    Flexible(
+                                      child: Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              buddy['name'] as String,
+                                              style: AppTypography.body(14,
+                                                  weight: FontWeight.w600),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          UserRoleBadge(
+                                            displayName:
+                                                buddy['name'] as String,
+                                            profilePictureUrl:
+                                                buddy['avatarUrl'] as String?,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     Container(
@@ -1619,10 +1660,25 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            authorName,
-                                            style: AppTypography.body(12,
-                                                weight: FontWeight.w600),
+                                          Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  authorName,
+                                                  style: AppTypography.body(12,
+                                                      weight: FontWeight.w600),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              UserRoleBadge(
+                                                displayName: authorName,
+                                                profilePictureUrl:
+                                                    authorAvatarUrl,
+                                              ),
+                                            ],
                                           ),
                                           const SizedBox(height: 4),
                                           Text(

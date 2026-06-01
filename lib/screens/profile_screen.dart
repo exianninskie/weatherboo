@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../utils/constants.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
+import '../widgets/user_role_badge.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -60,245 +61,270 @@ class _ProfileScreenState extends State<ProfileScreen> {
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
-        ),
-        flexibleSpace: Container(decoration: AppTheme.appBarGradient),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EditProfileScreen()),
-              );
-            },
-            tooltip: 'Edit Profile',
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'signout') {
-                _signOut();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'signout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, size: 20),
-                    SizedBox(width: 12),
-                    Text('Sign Out'),
-                  ],
+          flexibleSpace: Container(decoration: AppTheme.appBarGradient),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const EditProfileScreen()),
+                );
+              },
+              tooltip: 'Edit Profile',
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'signout') {
+                  _signOut();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'signout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, size: 20),
+                      SizedBox(width: 12),
+                      Text('Sign Out'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: KawaiiBackground(
-        child: Consumer<UserProvider>(
-        builder: (context, userProvider, child) {
-          if (userProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+              ],
+            ),
+          ],
+        ),
+        body: KawaiiBackground(
+          child: Consumer<UserProvider>(
+            builder: (context, userProvider, child) {
+              if (userProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          final profile = userProvider.userProfile;
-          final displayName = profile?['display_name'] ?? 'Weather User';
-          final email = userProvider.email ?? 'user@weatherboo.com';
-          final bio = profile?['bio'] ?? '';
-          final location = profile?['location'] ?? '';
-          final profilePictureUrl = userProvider.profilePictureUrl;
+              final profile = userProvider.userProfile;
+              final displayName = profile?['display_name'] ?? 'Weather User';
+              final email = userProvider.email ?? 'user@weatherboo.com';
+              final bio = profile?['bio'] ?? '';
+              final location = profile?['location'] ?? '';
+              final profilePictureUrl = userProvider.profilePictureUrl;
 
-          return SingleChildScrollView(
-            child: ResponsiveCenter(
-              padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
-              child: Column(
-                children: [
-                  // Profile Header
-                  Card(
-                    elevation: 3,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 45,
-                            backgroundColor: AppColors.surfaceElevated,
-                            backgroundImage: profilePictureUrl != null
-                                ? NetworkImage(profilePictureUrl)
-                                : null,
-                            child: profilePictureUrl == null
-                                ? Text(
-                                    displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.sakuraDeep,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+              return SingleChildScrollView(
+                child: ResponsiveCenter(
+                  padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
+                  child: Column(
+                    children: [
+                      // Profile Header
+                      Card(
+                        elevation: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 45,
+                                backgroundColor: AppColors.surfaceElevated,
+                                backgroundImage: profilePictureUrl != null
+                                    ? NetworkImage(profilePictureUrl)
+                                    : null,
+                                child: profilePictureUrl == null
+                                    ? Text(
+                                        displayName.isNotEmpty
+                                            ? displayName[0].toUpperCase()
+                                            : 'U',
+                                        style: const TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.sakuraDeep,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            displayName,
+                                            style: AppTypography.headline(20),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        UserRoleBadge(
+                                          displayName: displayName,
+                                          profilePictureUrl: profilePictureUrl,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(
+                                            color: userProvider.isOnline
+                                                ? Colors.green
+                                                : Colors.grey,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          userProvider.getOnlineStatus(),
+                                          style: AppTypography.body(12,
+                                              color: AppColors.textMuted),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      displayName,
-                                      style: AppTypography.headline(20),
+                                      email,
+                                      style: AppTypography.body(14,
+                                          color: AppColors.textMuted),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        color: userProvider.isOnline ? Colors.green : Colors.grey,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 2,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      userProvider.getOnlineStatus(),
-                                      style: AppTypography.body(12, color: AppColors.textMuted),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  email,
-                                  style: AppTypography.body(14, color: AppColors.textMuted),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                                if (location.isNotEmpty) ...[
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 16, color: AppColors.sakura),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          location,
-                                          style: AppTypography.body(13, color: AppColors.textMuted),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
+                                    if (location.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.location_on,
+                                              size: 16,
+                                              color: AppColors.sakura),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Text(
+                                              location,
+                                              style: AppTypography.body(13,
+                                                  color: AppColors.textMuted),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
-                                  ),
-                                ],
-                              ],
-                            ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
-                  if (bio.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          bio,
-                          style: AppTypography.body(14),
-                          textAlign: TextAlign.center,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                  ],
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Stats Section
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard('Days Active', '42'),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard('Cities', '12'),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard('Alerts', '23'),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Preferences Section
-                  Card(
-                    elevation: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                      if (bio.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Card(
+                          elevation: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              bio,
+                              style: AppTypography.body(14),
+                              textAlign: TextAlign.center,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 24),
+
+                      // Stats Section
+                      Row(
                         children: [
-                          Text(
-                            'Weather Preferences',
-                            style: AppTypography.headline(16, weight: FontWeight.w600),
+                          Expanded(
+                            child: _buildStatCard('Days Active', '42'),
                           ),
-                          const SizedBox(height: 16),
-                          _buildPreferenceRow(
-                            Icons.location_city,
-                            'Default City',
-                            profile?['default_city'] ?? 'Not set',
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildStatCard('Cities', '12'),
                           ),
-                          const Divider(height: 24),
-                          _buildPreferenceRow(
-                            Icons.thermostat,
-                            'Temperature Unit',
-                            profile?['temperature_unit'] ?? 'Celsius',
-                          ),
-                          const Divider(height: 24),
-                          _buildPreferenceRow(
-                            Icons.notifications,
-                            'Notifications',
-                            profile?['notifications_enabled'] == true ? 'Enabled' : 'Disabled',
-                          ),
-                          const Divider(height: 24),
-                          _buildPreferenceRow(
-                            Icons.email,
-                            'Email Notifications',
-                            profile?['email_notifications_enabled'] == true ? 'Enabled' : 'Disabled',
-                          ),
-                          const Divider(height: 24),
-                          _buildPreferenceRow(
-                            Icons.desktop_windows,
-                            'Desktop Notifications',
-                            profile?['desktop_notifications_enabled'] == true ? 'Enabled' : 'Disabled',
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildStatCard('Alerts', '23'),
                           ),
                         ],
                       ),
-                    ),
+
+                      const SizedBox(height: 24),
+
+                      // Preferences Section
+                      Card(
+                        elevation: 2,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Weather Preferences',
+                                style: AppTypography.headline(16,
+                                    weight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildPreferenceRow(
+                                Icons.location_city,
+                                'Default City',
+                                profile?['default_city'] ?? 'Not set',
+                              ),
+                              const Divider(height: 24),
+                              _buildPreferenceRow(
+                                Icons.thermostat,
+                                'Temperature Unit',
+                                profile?['temperature_unit'] ?? 'Celsius',
+                              ),
+                              const Divider(height: 24),
+                              _buildPreferenceRow(
+                                Icons.notifications,
+                                'Notifications',
+                                profile?['notifications_enabled'] == true
+                                    ? 'Enabled'
+                                    : 'Disabled',
+                              ),
+                              const Divider(height: 24),
+                              _buildPreferenceRow(
+                                Icons.email,
+                                'Email Notifications',
+                                profile?['email_notifications_enabled'] == true
+                                    ? 'Enabled'
+                                    : 'Disabled',
+                              ),
+                              const Divider(height: 24),
+                              _buildPreferenceRow(
+                                Icons.desktop_windows,
+                                'Desktop Notifications',
+                                profile?['desktop_notifications_enabled'] ==
+                                        true
+                                    ? 'Enabled'
+                                    : 'Disabled',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+                    ],
                   ),
-                  
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
-          );
-        },
+                ),
+              );
+            },
+          ),
         ),
       ),
-    ),
     );
   }
 
