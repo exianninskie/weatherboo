@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../services/weather_service.dart';
@@ -43,7 +45,8 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
     });
 
     try {
-      final currentWeather = await _weatherService.getCurrentWeather(targetCity);
+      final currentWeather =
+          await _weatherService.getCurrentWeather(targetCity);
       await _loadMoodHistory();
       await _loadDailyQuote();
       await _loadRoutineProgress();
@@ -87,11 +90,13 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
     final lastQuoteDate = prefs.getString('last_quote_date');
     final storedQuote = prefs.getString('daily_quote');
 
-    if (lastQuoteDate != today.toIso8601String().split('T')[0] || storedQuote == null) {
+    if (lastQuoteDate != today.toIso8601String().split('T')[0] ||
+        storedQuote == null) {
       final quotes = _getMotivationalQuotes();
       final randomQuote = quotes[today.day % quotes.length];
       await prefs.setString('daily_quote', randomQuote);
-      await prefs.setString('last_quote_date', today.toIso8601String().split('T')[0]);
+      await prefs.setString(
+          'last_quote_date', today.toIso8601String().split('T')[0]);
       setState(() {
         _dailyQuote = randomQuote;
       });
@@ -113,20 +118,21 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
 
   Future<void> _saveMood(int moodValue) async {
     final prefs = await SharedPreferences.getInstance();
-    final weatherMain = _currentWeather?['weather'][0]['main'] as String? ?? 'clear';
+    final weatherMain =
+        _currentWeather?['weather'][0]['main'] as String? ?? 'clear';
     final entry = '$moodValue|$weatherMain|${DateTime.now().toIso8601String()}';
-    
+
     final moodData = prefs.getStringList('mood_history') ?? [];
     moodData.add(entry);
-    
+
     // Keep only last 30 entries
     if (moodData.length > 30) {
       moodData.removeAt(0);
     }
-    
+
     await prefs.setStringList('mood_history', moodData);
     await _loadMoodHistory();
-    
+
     setState(() {
       _selectedMood = moodValue;
     });
@@ -161,29 +167,64 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
 
     final condition = weatherMain.toLowerCase();
     final conditionMapping = {
-      'clear sky': 'clear', 'clear': 'clear',
-      'few clouds': 'clouds', 'scattered clouds': 'clouds', 'broken clouds': 'clouds',
-      'overcast clouds': 'clouds', 'clouds': 'clouds', 'cloud': 'clouds',
-      'light rain': 'rain', 'moderate rain': 'rain', 'heavy intensity rain': 'rain',
-      'very heavy rain': 'rain', 'extreme rain': 'rain', 'freezing rain': 'rain',
-      'light intensity shower rain': 'rain', 'shower rain': 'rain',
-      'heavy intensity shower rain': 'rain', 'ragged shower rain': 'rain', 'rain': 'rain',
-      'light intensity drizzle': 'drizzle', 'drizzle': 'drizzle',
-      'heavy intensity drizzle': 'drizzle', 'light intensity drizzle rain': 'drizzle',
-      'drizzle rain': 'drizzle', 'heavy intensity drizzle rain': 'drizzle',
-      'shower rain and drizzle': 'drizzle', 'heavy shower rain and drizzle': 'drizzle',
+      'clear sky': 'clear',
+      'clear': 'clear',
+      'few clouds': 'clouds',
+      'scattered clouds': 'clouds',
+      'broken clouds': 'clouds',
+      'overcast clouds': 'clouds',
+      'clouds': 'clouds',
+      'cloud': 'clouds',
+      'light rain': 'rain',
+      'moderate rain': 'rain',
+      'heavy intensity rain': 'rain',
+      'very heavy rain': 'rain',
+      'extreme rain': 'rain',
+      'freezing rain': 'rain',
+      'light intensity shower rain': 'rain',
+      'shower rain': 'rain',
+      'heavy intensity shower rain': 'rain',
+      'ragged shower rain': 'rain',
+      'rain': 'rain',
+      'light intensity drizzle': 'drizzle',
+      'drizzle': 'drizzle',
+      'heavy intensity drizzle': 'drizzle',
+      'light intensity drizzle rain': 'drizzle',
+      'drizzle rain': 'drizzle',
+      'heavy intensity drizzle rain': 'drizzle',
+      'shower rain and drizzle': 'drizzle',
+      'heavy shower rain and drizzle': 'drizzle',
       'shower drizzle': 'drizzle',
-      'thunderstorm with light rain': 'thunderstorm', 'thunderstorm with rain': 'thunderstorm',
-      'thunderstorm with heavy rain': 'thunderstorm', 'light thunderstorm': 'thunderstorm',
-      'heavy thunderstorm': 'thunderstorm', 'ragged thunderstorm': 'thunderstorm',
-      'thunderstorm with light drizzle': 'thunderstorm', 'thunderstorm with drizzle': 'thunderstorm',
-      'thunderstorm with heavy drizzle': 'thunderstorm', 'thunderstorm': 'thunderstorm',
-      'light snow': 'snow', 'heavy snow': 'snow', 'sleet': 'snow',
-      'light shower sleet': 'snow', 'shower sleet': 'snow', 'rain and snow': 'snow',
-      'light rain and snow': 'snow', 'light shower snow': 'snow', 'shower snow': 'snow',
-      'heavy shower snow': 'snow', 'snow': 'snow',
-      'mist': 'mist', 'smoke': 'mist', 'haze': 'mist', 'dust': 'mist',
-      'fog': 'mist', 'sand': 'mist', 'ash': 'mist', 'squall': 'mist', 'tornado': 'mist',
+      'thunderstorm with light rain': 'thunderstorm',
+      'thunderstorm with rain': 'thunderstorm',
+      'thunderstorm with heavy rain': 'thunderstorm',
+      'light thunderstorm': 'thunderstorm',
+      'heavy thunderstorm': 'thunderstorm',
+      'ragged thunderstorm': 'thunderstorm',
+      'thunderstorm with light drizzle': 'thunderstorm',
+      'thunderstorm with drizzle': 'thunderstorm',
+      'thunderstorm with heavy drizzle': 'thunderstorm',
+      'thunderstorm': 'thunderstorm',
+      'light snow': 'snow',
+      'heavy snow': 'snow',
+      'sleet': 'snow',
+      'light shower sleet': 'snow',
+      'shower sleet': 'snow',
+      'rain and snow': 'snow',
+      'light rain and snow': 'snow',
+      'light shower snow': 'snow',
+      'shower snow': 'snow',
+      'heavy shower snow': 'snow',
+      'snow': 'snow',
+      'mist': 'mist',
+      'smoke': 'mist',
+      'haze': 'mist',
+      'dust': 'mist',
+      'fog': 'mist',
+      'sand': 'mist',
+      'ash': 'mist',
+      'squall': 'mist',
+      'tornado': 'mist',
     };
 
     return conditionMapping[condition] ?? condition;
@@ -376,7 +417,8 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: AppColors.sakuraDeep),
+            const Icon(Icons.error_outline,
+                size: 64, color: AppColors.sakuraDeep),
             const SizedBox(height: 16),
             Text(
               'Failed to load data',
@@ -438,7 +480,9 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
     final userProvider = Provider.of<UserProvider>(context);
     final profile = userProvider.userProfile;
     final temperatureUnit = profile?['temperature_unit'] ?? 'Celsius';
-    final displayTemp = temperatureUnit == 'Fahrenheit' ? (temp * 9/5 + 32).round() : temp.round();
+    final displayTemp = temperatureUnit == 'Fahrenheit'
+        ? (temp * 9 / 5 + 32).round()
+        : temp.round();
     final tempUnit = temperatureUnit == 'Fahrenheit' ? '°F' : '°C';
 
     return Card(
@@ -520,11 +564,13 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
       color: AppColors.sakura,
       content: _dailyQuote ?? 'Loading your daily inspiration...',
       isQuote: true,
+      shareText: _dailyQuote ?? 'Loading your daily inspiration...',
     );
   }
 
   Widget _buildWeatherAffirmationCard(List<String> affirmations) {
-    final randomAffirmation = affirmations[DateTime.now().day % affirmations.length];
+    final randomAffirmation =
+        affirmations[DateTime.now().day % affirmations.length];
     return _buildFeatureCard(
       icon: Icons.wb_sunny_outlined,
       title: 'Weather Affirmation',
@@ -532,6 +578,7 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
       color: AppColors.sky,
       content: randomAffirmation,
       isQuote: true,
+      shareText: randomAffirmation,
     );
   }
 
@@ -551,7 +598,8 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
                     color: AppColors.lavender.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(Icons.sentiment_satisfied_alt_outlined, size: 28, color: AppColors.lavender),
+                  child: Icon(Icons.sentiment_satisfied_alt_outlined,
+                      size: 28, color: AppColors.lavender),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -565,7 +613,8 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'How are you feeling today?',
-                        style: AppTypography.body(13, color: AppColors.textMuted),
+                        style:
+                            AppTypography.body(13, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -636,7 +685,8 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
                     color: AppColors.mint.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(Icons.wb_twilight_outlined, size: 28, color: AppColors.mint),
+                  child: Icon(Icons.wb_twilight_outlined,
+                      size: 28, color: AppColors.mint),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -650,7 +700,8 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Weather-aware checklist for today',
-                        style: AppTypography.body(13, color: AppColors.textMuted),
+                        style:
+                            AppTypography.body(13, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -661,54 +712,148 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
             const Divider(),
             const SizedBox(height: 16),
             ...routineItems.map((item) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: InkWell(
-                onTap: () => _toggleRoutineItem(item),
-                borderRadius: BorderRadius.circular(8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 2),
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: _completedRoutineItems.contains(item)
-                            ? AppColors.mint
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: _completedRoutineItems.contains(item)
-                              ? AppColors.mint
-                              : Colors.grey.withValues(alpha: 0.4),
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: _completedRoutineItems.contains(item)
-                          ? const Icon(Icons.check, size: 16, color: Colors.white)
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: AppTypography.body(14,
-                          color: _completedRoutineItems.contains(item)
-                              ? Colors.grey
-                              : null,
-                        ).copyWith(
-                          decoration: _completedRoutineItems.contains(item)
-                              ? TextDecoration.lineThrough
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () => _toggleRoutineItem(item),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: _completedRoutineItems.contains(item)
+                                ? AppColors.mint
+                                : Colors.transparent,
+                            border: Border.all(
+                              color: _completedRoutineItems.contains(item)
+                                  ? AppColors.mint
+                                  : Colors.grey.withValues(alpha: 0.4),
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: _completedRoutineItems.contains(item)
+                              ? const Icon(Icons.check,
+                                  size: 16, color: Colors.white)
                               : null,
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: AppTypography.body(
+                              14,
+                              color: _completedRoutineItems.contains(item)
+                                  ? Colors.grey
+                                  : null,
+                            ).copyWith(
+                              decoration: _completedRoutineItems.contains(item)
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            )),
+                  ),
+                )),
           ],
         ),
+      ),
+    );
+  }
+
+  String _appendWatermark(String text) {
+    return '$text\n\nshared with love by Weatherboo';
+  }
+
+  Future<void> _shareToPlatform(String platform, String message) async {
+    final text = _appendWatermark(message);
+    if (!mounted) return;
+
+    switch (platform) {
+      case 'x':
+        final encodedText = Uri.encodeComponent(text);
+        final urls = [
+          Uri.parse('twitter://post?message=$encodedText'),
+          Uri.parse('https://x.com/intent/tweet?text=$encodedText'),
+          Uri.parse('https://twitter.com/intent/tweet?text=$encodedText'),
+        ];
+
+        for (final uri in urls) {
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            return;
+          }
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Unable to open X. Please install the app or try again later.')),
+        );
+        break;
+      case 'instagram':
+        final clipboardData = ClipboardData(text: text);
+        await Clipboard.setData(clipboardData);
+        final uri = Uri.parse('instagram://app');
+
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Message copied to clipboard. Paste it into Instagram.')),
+          );
+          return;
+        }
+
+        const fallbackUrl = 'https://www.instagram.com/';
+        if (await canLaunchUrl(Uri.parse(fallbackUrl))) {
+          await launchUrl(Uri.parse(fallbackUrl),
+              mode: LaunchMode.externalApplication);
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Instagram caption copied to clipboard. Open Instagram and paste it there.')),
+        );
+        break;
+      default:
+        break;
+    }
+  }
+
+  Widget _buildShareActions(String message) {
+    final userProvider = Provider.of<UserProvider>(context);
+    if (!userProvider.isLoggedIn) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.share, size: 18),
+              label: const Text('Share to X'),
+              onPressed: () => _shareToPlatform('x', message),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.camera_alt_outlined, size: 18),
+              label: const Text('Share to Instagram'),
+              onPressed: () => _shareToPlatform('instagram', message),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -720,6 +865,7 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
     required Color color,
     required String content,
     bool isQuote = false,
+    String? shareText,
   }) {
     return Card(
       elevation: 4,
@@ -750,7 +896,8 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: AppTypography.body(13, color: AppColors.textMuted),
+                        style:
+                            AppTypography.body(13, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -774,6 +921,7 @@ class _MoodMotivationScreenState extends State<MoodMotivationScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
+            if (shareText != null) _buildShareActions(shareText),
           ],
         ),
       ),
