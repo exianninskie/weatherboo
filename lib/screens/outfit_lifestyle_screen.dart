@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../services/weather_service.dart';
@@ -643,6 +644,11 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
       subtitle: 'AI-powered recommendations for today',
       color: AppColors.sakura,
       items: suggestions,
+      actionLinks: const [
+        _EcommerceLink(label: 'Amazon', url: 'https://www.amazon.com'),
+        _EcommerceLink(label: 'eBay', url: 'https://www.ebay.com'),
+        _EcommerceLink(label: 'Alibaba', url: 'https://www.alibaba.com'),
+      ],
     );
   }
 
@@ -672,6 +678,7 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
     required String subtitle,
     required Color color,
     required List<String> items,
+    List<_EcommerceLink>? actionLinks,
   }) {
     return Card(
       elevation: 4,
@@ -737,9 +744,54 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
                     ],
                   ),
                 )),
+            if (actionLinks != null && actionLinks.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const Divider(),
+              const SizedBox(height: 12),
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  runAlignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: actionLinks.map(
+                    (link) {
+                      return SizedBox(
+                        height: 40,
+                        child: OutlinedButton(
+                          onPressed: () => _openUrl(context, link.url),
+                          child: Text(link.label),
+                        ),
+                      );
+                    },
+                  ).toList(),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
+
+  Future<void> _openUrl(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Unable to open website. Please try again later.'),
+      ),
+    );
+  }
+}
+
+class _EcommerceLink {
+  const _EcommerceLink({required this.label, required this.url});
+
+  final String label;
+  final String url;
 }
