@@ -91,15 +91,22 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
     _communityPostsSubscription?.cancel();
     _communityPostsSubscription =
         _supabaseService.streamCommunityPosts().listen((posts) async {
+      final currentUserId =
+          Provider.of<UserProvider>(context, listen: false).userId;
+      final currentUserName = _currentUserDisplayName();
+
       final formattedPosts = posts.map((post) {
         final createdAt = post['created_at'];
+        final postUserId = post['user_id'] as String?;
         return {
           ...post,
           'created_at':
               createdAt is String ? DateTime.parse(createdAt) : createdAt,
           'timestamp':
               createdAt is String ? DateTime.parse(createdAt) : createdAt,
-          'user': post['display_name'] ?? 'You',
+          'user': postUserId == currentUserId
+              ? currentUserName
+              : post['display_name'] ?? 'Weatherboo user',
         };
       }).toList();
 
@@ -144,22 +151,24 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
         _supabaseService.streamOnlineUsers().listen((profiles) {
       final currentUserId =
           Provider.of<UserProvider>(context, listen: false).userId;
-      final buddies = profiles
-          .map((profile) => {
-                'id': profile['id'] as String?,
-                'name': profile['id'] == currentUserId
-                    ? 'You'
-                    : profile['display_name'] ??
-                        profile['email'] ??
-                        'Weather Buddy',
-                'avatarUrl': profile['profile_picture_url'] as String?,
-                'avatar': profile['profile_picture_url'] != null ? '👤' : '☁️',
-                'activity': profile['bio'] ??
-                    'Loves weather chats and checking the sky',
-                'status': profile['is_online'] == true ? 'Online' : 'Away',
-                'sharedInterests': <String>['Weather', 'Nature', 'Friends'],
-              })
-          .toList();
+      final currentUserName = _currentUserDisplayName();
+      final buddies = profiles.map((profile) {
+        final isCurrentUser = profile['id'] == currentUserId;
+        final displayName = profile['display_name'] as String?;
+        final email = profile['email'] as String?;
+        return {
+          'id': profile['id'] as String?,
+          'name': isCurrentUser
+              ? currentUserName
+              : displayName ?? email?.split('@').first ?? 'Weather Buddy',
+          'avatarUrl': profile['profile_picture_url'] as String?,
+          'avatar': profile['profile_picture_url'] != null ? '👤' : '☁️',
+          'activity':
+              profile['bio'] ?? 'Loves weather chats and checking the sky',
+          'status': profile['is_online'] == true ? 'Online' : 'Away',
+          'sharedInterests': <String>['Weather', 'Nature', 'Friends'],
+        };
+      }).toList();
 
       buddies.sort((a, b) {
         if (a['id'] == currentUserId) return -1;
@@ -183,6 +192,9 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
         _supabaseService.streamBuddyComments().listen((comments) async {
       final grouped = <String, List<Map<String, String>>>{};
       final authorIds = <String>{};
+      final currentUserId =
+          Provider.of<UserProvider>(context, listen: false).userId;
+      final currentUserName = _currentUserDisplayName();
 
       for (final comment in comments) {
         final recipientId = comment['recipient_id'] as String?;
@@ -194,7 +206,9 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
         grouped.putIfAbsent(recipientId, () => []).add({
           'id': comment['id']?.toString() ?? '',
           'authorId': authorId,
-          'author': comment['author_name'] as String? ?? 'You',
+          'author': authorId == currentUserId
+              ? currentUserName
+              : comment['author_name'] as String? ?? 'Weatherboo user',
           'text': comment['text'] as String? ?? '',
           'timestamp': comment['created_at'] as String? ?? '',
           'replyToText': comment['reply_to_text'] as String? ?? '',
@@ -260,7 +274,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final profile = userProvider.userProfile;
     final userId = userProvider.userId;
-    final displayName = profile?['display_name'] ?? 'You';
+    final displayName = profile?['display_name'] ??
+        (userProvider.email?.split('@').first ?? 'Weatherboo user');
 
     if (userId == null) return;
 
@@ -370,7 +385,7 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
   }
 
   String _formatCommunityUsername(String rawUsername, String weatherMain) {
-    if (rawUsername == 'You') return rawUsername;
+    if (rawUsername == 'You') return _currentUserDisplayName();
     final prefix = _getWeatherUsernamePrefix(weatherMain);
     final lowerUsername = rawUsername.toLowerCase();
     if (lowerUsername.startsWith(prefix.toLowerCase())) {
@@ -472,7 +487,9 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                   final profile = userProvider.userProfile;
                   final userId = userProvider.userId;
                   final recipientId = buddy['id'] as String?;
-                  final authorName = profile?['display_name'] ?? 'You';
+                  final authorName = profile?['display_name'] ??
+                      (userProvider.email?.split('@').first ??
+                          'Weatherboo user');
                   if (userId != null && recipientId != null) {
                     _supabaseService.createBuddyComment(
                       recipientId: recipientId,
@@ -555,7 +572,9 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                       Provider.of<UserProvider>(context, listen: false);
                   final profile = userProvider.userProfile;
                   final userId = userProvider.userId;
-                  final authorName = profile?['display_name'] ?? 'You';
+                  final authorName = profile?['display_name'] ??
+                      (userProvider.email?.split('@').first ??
+                          'Weatherboo user');
                   if (userId != null) {
                     _supabaseService.createBuddyComment(
                       recipientId: threadRecipientId,
@@ -611,7 +630,10 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                     ? Provider.of<UserProvider>(context, listen: false)
                         .profilePictureUrl
                     : _commentAuthorAvatars[authorId ?? ''];
-                final authorName = comment['author'] ?? 'You';
+                final authorName = _resolveAuthorName(
+                  comment['author'] as String?,
+                  authorId as String?,
+                );
                 final timestamp = comment['timestamp'];
                 final dateText = timestamp != null && timestamp.isNotEmpty
                     ? _formatDate(_parseTimestamp(timestamp))
@@ -1177,6 +1199,33 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
     }
   }
 
+  String _currentUserDisplayName() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final displayName = userProvider.userProfile?['display_name'] as String?;
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
+    }
+    final email = userProvider.email;
+    if (email != null && email.contains('@')) {
+      return email.split('@').first;
+    }
+    return 'Weatherboo user';
+  }
+
+  String _resolveAuthorName(String? authorName, String? authorId) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final currentUserId = userProvider.userId;
+    if (authorId != null && authorId == currentUserId) {
+      return _currentUserDisplayName();
+    }
+
+    if (authorName != null && authorName.isNotEmpty && authorName != 'You') {
+      return authorName;
+    }
+
+    return 'Weatherboo user';
+  }
+
   Widget _buildWeatherSharingCard() {
     final latestUserPost = _latestSharedMoment();
 
@@ -1646,7 +1695,10 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                                       listen: false)
                                   .profilePictureUrl
                               : _commentAuthorAvatars[authorId ?? ''];
-                          final authorName = comment['author'] ?? 'You';
+                          final authorName = _resolveAuthorName(
+                            comment['author'] as String?,
+                            authorId as String?,
+                          );
                           final timestamp = comment['timestamp'];
                           final dateText =
                               timestamp != null && timestamp.isNotEmpty
