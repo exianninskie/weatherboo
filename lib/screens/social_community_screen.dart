@@ -777,8 +777,12 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
     final sorted = List<Map<String, dynamic>>.from(_weatherBuddies);
 
     sorted.sort((a, b) {
-      if (a['id'] == currentUserId) return -1;
-      if (b['id'] == currentUserId) return 1;
+      if (a['id'] == currentUserId && b['id'] != currentUserId) {
+        return -1;
+      }
+      if (b['id'] == currentUserId && a['id'] != currentUserId) {
+        return 1;
+      }
 
       final aComments = _buddyComments[a['id'] as String? ?? ''] ?? [];
       final bComments = _buddyComments[b['id'] as String? ?? ''] ?? [];
@@ -797,7 +801,7 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
       return nameA.compareTo(nameB);
     });
 
-    return sorted;
+    return sorted.take(3).toList();
   }
 
   Future<void> _confirmDeleteCommunityPost(String postId) async {
