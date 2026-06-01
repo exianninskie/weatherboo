@@ -38,7 +38,8 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
     });
 
     try {
-      final currentWeather = await _weatherService.getCurrentWeather(targetCity);
+      final currentWeather =
+          await _weatherService.getCurrentWeather(targetCity);
 
       if (mounted) {
         setState(() {
@@ -149,18 +150,20 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
     };
 
     final normalizedCondition = conditionMapping[condition] ?? condition;
-    debugPrint('Weather condition from API: $weatherMain, Normalized: $normalizedCondition');
+    debugPrint(
+        'Weather condition from API: $weatherMain, Normalized: $normalizedCondition');
     return normalizedCondition;
   }
 
-  List<String> _getOutfitSuggestions(String tempRange, String weatherCondition) {
+  List<String> _getOutfitSuggestions(
+      String tempRange, String weatherCondition) {
     final suggestions = <String>[];
 
     // Temperature-based clothing
     switch (tempRange) {
       case 'cold':
         suggestions.addAll([
-          '🧥 Heavy coat or down jacket',
+          '🧥 Heavy coat or insulated jacket',
           '🧣 Warm scarf and gloves',
           '🧢 Thermal hat or beanie',
           '👖 Layered pants or thermal leggings',
@@ -169,9 +172,9 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
       case 'cool':
         suggestions.addAll([
           '🧥 Light jacket or cardigan',
+          '👕 Long-sleeve shirt or thin sweater',
+          '👖 Comfortable jeans or chinos',
           '🧣 Light scarf optional',
-          '👕 Long-sleeve shirt',
-          '👖 Regular pants or jeans',
         ]);
         break;
       case 'mild':
@@ -179,12 +182,13 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
           '👕 T-shirt or light blouse',
           '🧥 Light layer for evening',
           '👖 Comfortable pants or skirt',
+          '👟 Comfortable sneakers',
         ]);
         break;
       case 'hot':
         suggestions.addAll([
           '👕 Lightweight breathable shirt',
-          '🩳 Shorts or light skirt',
+          '🩳 Shorts or a light skirt',
           '👒 Sun hat or cap',
           '🕶️ Sunglasses',
         ]);
@@ -195,37 +199,65 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
     switch (weatherCondition) {
       case 'rain':
       case 'drizzle':
+        suggestions.addAll([
+          '☔ Waterproof jacket or rain poncho',
+          '👢 Water-resistant footwear',
+          '🧥 Quick-dry outer layer',
+        ]);
+        if (tempRange == 'cold' || tempRange == 'cool') {
+          suggestions.add('🧤 Light waterproof gloves');
+        }
+        break;
       case 'thunderstorm':
         suggestions.addAll([
-          '☔ Waterproof jacket or umbrella',
-          '👢 Water-resistant footwear',
+          '☔ Heavy rain jacket with hood',
+          '👢 Sturdy waterproof boots',
+          '🧥 Layered quick-dry fabrics',
         ]);
         break;
       case 'snow':
         suggestions.addAll([
-          '🥾 Waterproof boots',
-          '🧣 Extra warm layers',
+          '🥾 Insulated waterproof boots',
+          '🧣 Thick scarf and gloves',
+          '🧥 Warm puffer or wool coat',
         ]);
         break;
       case 'clouds':
       case 'cloudy':
       case 'cloud':
-        suggestions.addAll([
-          '🧥 Light jacket or cardigan',
-          '👕 Comfortable breathable shirt',
-        ]);
+        if (tempRange == 'hot') {
+          suggestions.addAll([
+            '🩳 Lightweight shorts or breathable skirt',
+            '🧢 Cap for mild sun',
+          ]);
+        } else if (tempRange == 'mild') {
+          suggestions.addAll([
+            '🧥 Light jacket or windbreaker',
+            '👕 Long-sleeve shirt or blouse',
+          ]);
+        } else {
+          suggestions.addAll([
+            '🧥 Cozy layer or cardigan',
+            '👖 Comfortable pants',
+          ]);
+        }
         break;
       case 'mist':
         suggestions.addAll([
-          '🧥 Light jacket or hoodie',
-          '👕 Long-sleeve shirt',
+          '🧥 Light water-resistant jacket',
+          '👕 Long-sleeve top',
           '👖 Comfortable pants',
-          '🧣 Light scarf optional',
+          '🧣 Light scarf if needed',
         ]);
         break;
       case 'clear':
         if (tempRange == 'hot') {
-          suggestions.add('🧴 Sunscreen');
+          suggestions.addAll([
+            '🧴 Sunscreen',
+            '👒 Wide-brim hat',
+          ]);
+        } else if (tempRange == 'cool') {
+          suggestions.add('🧥 Light windbreaker');
         }
         break;
     }
@@ -233,68 +265,80 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
     return suggestions;
   }
 
-  List<String> _getActivitySuggestions(String tempRange, String weatherCondition) {
+  List<String> _getActivitySuggestions(
+      String tempRange, String weatherCondition) {
     switch (weatherCondition) {
       case 'rain':
       case 'drizzle':
+        return [
+          '📚 Cozy reading session at a café',
+          '🎬 Movie or series marathon',
+          '🎨 Indoor creative projects',
+          '🏠 Gentle home yoga or stretch',
+          '🍳 Cook a comforting meal',
+          '🛍️ Browse a local mall or market',
+        ];
       case 'thunderstorm':
         return [
-          '📚 Read a book at a cozy café',
-          '🎬 Watch movies or series',
-          '🎨 Indoor creative projects',
-          '🏠 Home workout or yoga',
-          '🍳 Cook a warm meal',
-          '🎮 Board games or video games',
+          '🎬 Watch a film with snacks',
+          '📖 Read with a warm blanket',
+          '🎨 Try home crafts or journaling',
+          '🧘 Indoor meditation or yoga',
+          '🍵 Sip tea while planning the week',
         ];
       case 'snow':
         return [
           '⛷️ Skiing or snowboarding',
           '🛷 Sledding or snow tubing',
-          '☕ Cozy café with hot chocolate',
-          '📖 Reading by the fireplace',
-          '🏠 Indoor movie marathon',
-          '❄️ Building a snowman',
+          '☕ Warm café visit with hot chocolate',
+          '📖 Reading by a fireplace',
+          '❄️ Build a snowman or snow fort',
+          '🏠 Cozy indoor board games',
         ];
       case 'clouds':
       case 'cloudy':
       case 'cloud':
+        if (tempRange == 'hot') {
+          return [
+            '🥪 Outdoor terrace brunch',
+            '🚶 Stroll around a city park',
+            '📸 Casual street photography',
+            '🛍️ Explore a weekend market',
+            '☕ Café hangout with friends',
+          ];
+        }
         return [
-          '🚶 Outdoor walk or jog',
-          '🌳 Visit a park',
-          '📸 Nature photography',
-          '☕ Outdoor café visit',
-          '🏛️ Visit a museum or gallery',
-          '🛍️ Shopping at a mall',
+          '☕ Relax at a cozy café',
+          '🏛️ Visit a gallery or museum',
+          '📚 Find a quiet bookstore',
+          '🎨 Indoor art workshop',
+          '🚶 Leisurely walk nearby',
         ];
       case 'mist':
         return [
-          '🏛️ Visit a museum or gallery',
-          '📚 Reading at a café',
-          '🎨 Indoor creative projects',
-          '🎬 Watch movies or series',
-          '🍳 Cook a warm meal',
-          '🧘 Indoor yoga or meditation',
+          '🏛️ Museum or gallery visit',
+          '📚 Reading at a snug café',
+          '🎨 Try a cozy indoor craft',
+          '🎬 Watch a calm movie',
+          '🧘 Gentle indoor yoga',
         ];
       case 'clear':
         if (tempRange == 'hot') {
           return [
-            '🏖️ Beach day or swimming',
-            '🎾 Outdoor sports',
+            '🏖️ Beach or pool day',
             '🧺 Picnic in the park',
-            '🚴 Bike riding',
-            '🌳 Nature walk or hiking',
-            '📸 Outdoor photography',
-          ];
-        } else {
-          return [
-            '🚶 Outdoor walk or jog',
-            '🌳 Visit a park',
-            '📸 Nature photography',
-            '🧘 Outdoor yoga',
-            '🚴 Cycling',
-            '☕ Outdoor café visit',
+            '🚴 Scenic bike ride',
+            '🌳 Nature park walk',
+            '📸 Outdoor photography session',
           ];
         }
+        return [
+          '🚶 Relaxing outdoor walk',
+          '🧘 Morning yoga in the sun',
+          '🌳 Visit a nearby park',
+          '🚴 Bike around the neighborhood',
+          '☕ Outdoor café stop',
+        ];
       default:
         return [
           '🚶 Light outdoor walk',
@@ -308,7 +352,7 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
   List<String> _getDrinkPairings(String tempRange, String weatherCondition) {
     final pairings = <String>[];
 
-    // Temperature-based
+    // Temperature-based foundation
     switch (tempRange) {
       case 'cold':
       case 'cool':
@@ -316,63 +360,87 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
           '☕ Hot coffee or latte',
           '🍵 Hot tea (chai, green, herbal)',
           '🍫 Hot chocolate',
-          '🧋 Warm bubble tea',
         ]);
         break;
       case 'mild':
         pairings.addAll([
           '☕ Iced or hot coffee',
           '🍵 Fresh tea',
-          '🥤 Smoothie',
-          '🧋 Bubble tea',
+          '🥤 Fruit smoothie',
         ]);
         break;
       case 'hot':
         pairings.addAll([
           '🧊 Iced coffee or cold brew',
-          '🥤 Fresh fruit juice',
           '🍋 Lemonade or iced tea',
+          '🥤 Fresh fruit juice',
           '🥭 Mango smoothie',
-          '🍧 Ice cream or sorbet',
         ]);
         break;
     }
 
-    // Weather-specific additions
+    // Weather-specific refinements
     switch (weatherCondition) {
       case 'rain':
       case 'drizzle':
-      case 'thunderstorm':
         pairings.addAll([
           '🍵 Comforting herbal tea',
           '☕ Warm spiced latte',
+          '🍪 Pair with a soft cookie',
+        ]);
+        break;
+      case 'thunderstorm':
+        pairings.addAll([
+          '☕ Chamomile tea',
+          '🍵 Hot ginger tea',
+          '🍫 Rich hot chocolate',
         ]);
         break;
       case 'snow':
         pairings.addAll([
           '🍫 Rich hot chocolate',
           '☕ Warm cider or mulled wine',
+          '🥧 Spiced latte',
         ]);
         break;
       case 'clouds':
       case 'cloudy':
       case 'cloud':
-        pairings.addAll([
-          '☕ Iced or hot coffee',
-          '🍵 Fresh tea',
-          '🥤 Smoothie',
-        ]);
+        if (tempRange == 'hot') {
+          pairings.addAll([
+            '🍧 Iced matcha latte',
+            '🍋 Lemonade with mint',
+            '🥤 Sparkling iced tea',
+          ]);
+        } else if (tempRange == 'mild') {
+          pairings.addAll([
+            '☕ Light latte or flat white',
+            '🍵 Green tea',
+            '🍹 Fruit-infused water',
+          ]);
+        } else {
+          pairings.addAll([
+            '☕ Warm coffee or tea',
+            '🍵 Spiced herbal tea',
+            '🍫 Hot chocolate',
+          ]);
+        }
         break;
       case 'mist':
         pairings.addAll([
           '☕ Hot coffee or latte',
           '🍵 Warm herbal tea',
           '🍫 Hot chocolate',
-          '🧋 Warm bubble tea',
         ]);
         break;
       case 'clear':
-        if (tempRange != 'hot') {
+        if (tempRange == 'hot') {
+          pairings.addAll([
+            '🍹 Tropical mocktail',
+            '🧊 Iced herbal tea',
+            '🥤 Fresh juice',
+          ]);
+        } else {
           pairings.add('🍹 Refreshing mocktail');
         }
         break;
@@ -389,27 +457,27 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        flexibleSpace: Container(decoration: AppTheme.appBarGradient),
-        title: Text('Outfit & Lifestyle', style: AppTypography.headline(20)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadWeather,
-            tooltip: 'Refresh',
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
-      ),
-      body: KawaiiBackground(
-        child: ResponsiveCenter(
-          padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
-          child: _buildContent(),
+          flexibleSpace: Container(decoration: AppTheme.appBarGradient),
+          title: Text('Outfit & Lifestyle', style: AppTypography.headline(20)),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadWeather,
+              tooltip: 'Refresh',
+            ),
+          ],
+        ),
+        body: KawaiiBackground(
+          child: ResponsiveCenter(
+            padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
+            child: _buildContent(),
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -425,7 +493,8 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: AppColors.sakuraDeep),
+            const Icon(Icons.error_outline,
+                size: 64, color: AppColors.sakuraDeep),
             const SizedBox(height: 16),
             Text(
               'Failed to load weather',
@@ -461,10 +530,13 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
     final tempRange = _getTemperatureRange(temp);
     final weatherCondition = _getWeatherCondition(weatherMain);
 
-    debugPrint('Temperature: $temp°C, Range: $tempRange, Weather: $weatherMain, Condition: $weatherCondition');
+    debugPrint(
+        'Temperature: $temp°C, Range: $tempRange, Weather: $weatherMain, Condition: $weatherCondition');
 
-    final outfitSuggestions = _getOutfitSuggestions(tempRange, weatherCondition);
-    final activitySuggestions = _getActivitySuggestions(tempRange, weatherCondition);
+    final outfitSuggestions =
+        _getOutfitSuggestions(tempRange, weatherCondition);
+    final activitySuggestions =
+        _getActivitySuggestions(tempRange, weatherCondition);
     final drinkPairings = _getDrinkPairings(tempRange, weatherCondition);
 
     return SingleChildScrollView(
@@ -488,7 +560,9 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
     final userProvider = Provider.of<UserProvider>(context);
     final profile = userProvider.userProfile;
     final temperatureUnit = profile?['temperature_unit'] ?? 'Celsius';
-    final displayTemp = temperatureUnit == 'Fahrenheit' ? (temp * 9/5 + 32).round() : temp.round();
+    final displayTemp = temperatureUnit == 'Fahrenheit'
+        ? (temp * 9 / 5 + 32).round()
+        : temp.round();
     final tempUnit = temperatureUnit == 'Fahrenheit' ? '°F' : '°C';
 
     return Card(
@@ -628,7 +702,8 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: AppTypography.body(13, color: AppColors.textMuted),
+                        style:
+                            AppTypography.body(13, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -639,29 +714,29 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
             const Divider(),
             const SizedBox(height: 16),
             ...items.map((item) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 2),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 2),
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: AppTypography.body(14),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      item,
-                      style: AppTypography.body(14),
-                    ),
-                  ),
-                ],
-              ),
-            )),
+                )),
           ],
         ),
       ),
