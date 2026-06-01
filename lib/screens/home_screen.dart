@@ -33,6 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadWeather() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.loadCurrentUser(
+        forceReload: userProvider.userProfile == null);
     final profile = userProvider.userProfile;
     final targetCity = profile?['default_city'] ?? 'New York';
 
@@ -43,7 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final currentWeather = await _weatherService.getCurrentWeather(targetCity);
+      final currentWeather =
+          await _weatherService.getCurrentWeather(targetCity);
       final forecast = await _weatherService.get5DayForecast(targetCity);
 
       if (mounted) {
@@ -93,178 +96,188 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-        automaticallyImplyLeading: false,
-        flexibleSpace: Container(decoration: AppTheme.appBarGradient),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.menu),
-            tooltip: 'Menu',
-            onSelected: (value) {
-              switch (value) {
-                case 'outfit':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const OutfitLifestyleScreen()),
-                  );
-                  break;
-                case 'mood':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MoodMotivationScreen()),
-                  );
-                  break;
-                case 'social':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SocialCommunityScreen()),
-                  );
-                  break;
-                case 'selfcare':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SelfCareWellnessScreen()),
-                  );
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'outfit',
-                child: Row(
-                  children: [
-                    Icon(Icons.checkroom_outlined, size: 20),
-                    SizedBox(width: 12),
-                    Text('Outfit & Lifestyle'),
-                  ],
+          automaticallyImplyLeading: false,
+          flexibleSpace: Container(decoration: AppTheme.appBarGradient),
+          actions: [
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.menu),
+              tooltip: 'Menu',
+              onSelected: (value) {
+                switch (value) {
+                  case 'outfit':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const OutfitLifestyleScreen()),
+                    );
+                    break;
+                  case 'mood':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const MoodMotivationScreen()),
+                    );
+                    break;
+                  case 'social':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SocialCommunityScreen()),
+                    );
+                    break;
+                  case 'selfcare':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SelfCareWellnessScreen()),
+                    );
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'outfit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.checkroom_outlined, size: 20),
+                      SizedBox(width: 12),
+                      Text('Outfit & Lifestyle'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'mood',
-                child: Row(
-                  children: [
-                    Icon(Icons.psychology_outlined, size: 20),
-                    SizedBox(width: 12),
-                    Text('Mood & Motivation'),
-                  ],
+                const PopupMenuItem(
+                  value: 'mood',
+                  child: Row(
+                    children: [
+                      Icon(Icons.psychology_outlined, size: 20),
+                      SizedBox(width: 12),
+                      Text('Mood & Motivation'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'social',
-                child: Row(
-                  children: [
-                    Icon(Icons.people_outline, size: 20),
-                    SizedBox(width: 12),
-                    Text('Social & Community'),
-                  ],
+                const PopupMenuItem(
+                  value: 'social',
+                  child: Row(
+                    children: [
+                      Icon(Icons.people_outline, size: 20),
+                      SizedBox(width: 12),
+                      Text('Social & Community'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'selfcare',
-                child: Row(
-                  children: [
-                    Icon(Icons.self_improvement_outlined, size: 20),
-                    SizedBox(width: 12),
-                    Text('Self-Care & Wellness'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => Navigator.pushNamed(context, '/profile'),
-            tooltip: 'Profile',
-          ),
-        ],
-      ),
-      body: KawaiiBackground(
-        child: Consumer<UserProvider>(
-          builder: (context, userProvider, child) {
-            final profile = userProvider.userProfile;
-            final temperatureUnit = profile?['temperature_unit'] ?? 'Celsius';
-
-            if (_isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (_errorMessage != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 64, color: AppColors.sakuraDeep),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Failed to load weather',
-                      style: AppTypography.headline(20),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _errorMessage!,
-                      style: AppTypography.body(14, color: AppColors.textMuted),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _loadWeather,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: ResponsiveCenter(
-                    padding: const EdgeInsets.fromLTRB(16, 100, 16, 16),
-                    child: Column(
-                      children: [
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.35),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.refresh, size: 16, color: Colors.white),
-                                const SizedBox(width: 4),
-                                GestureDetector(
-                                  onTap: _loadWeather,
-                                  child: Text(
-                                    'Refresh',
-                                    style: AppTypography.label(12, color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 100),
-                        _buildTodayWeatherCard(temperatureUnit),
-                        const SizedBox(height: 32),
-                        Text(
-                          'Weekly Forecast',
-                          style: AppTypography.headline(20, color: Colors.white),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildWeeklyForecast(temperatureUnit),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
+                const PopupMenuItem(
+                  value: 'selfcare',
+                  child: Row(
+                    children: [
+                      Icon(Icons.self_improvement_outlined, size: 20),
+                      SizedBox(width: 12),
+                      Text('Self-Care & Wellness'),
+                    ],
                   ),
                 ),
               ],
-            );
-          },
+            ),
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => Navigator.pushNamed(context, '/profile'),
+              tooltip: 'Profile',
+            ),
+          ],
+        ),
+        body: KawaiiBackground(
+          child: Consumer<UserProvider>(
+            builder: (context, userProvider, child) {
+              final profile = userProvider.userProfile;
+              final temperatureUnit = profile?['temperature_unit'] ?? 'Celsius';
+
+              if (_isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (_errorMessage != null) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 64, color: AppColors.sakuraDeep),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Failed to load weather',
+                        style: AppTypography.headline(20),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorMessage!,
+                        style:
+                            AppTypography.body(14, color: AppColors.textMuted),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _loadWeather,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: ResponsiveCenter(
+                      padding: const EdgeInsets.fromLTRB(16, 100, 16, 16),
+                      child: Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.35),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.refresh,
+                                      size: 16, color: Colors.white),
+                                  const SizedBox(width: 4),
+                                  GestureDetector(
+                                    onTap: _loadWeather,
+                                    child: Text(
+                                      'Refresh',
+                                      style: AppTypography.label(12,
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 100),
+                          _buildTodayWeatherCard(temperatureUnit),
+                          const SizedBox(height: 32),
+                          Text(
+                            'Weekly Forecast',
+                            style:
+                                AppTypography.headline(20, color: Colors.white),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildWeeklyForecast(temperatureUnit),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -278,8 +291,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final weatherMain = _currentWeather!['weather'][0]['main'];
     final weatherDescription = _currentWeather!['weather'][0]['description'];
 
-    final displayTemp = temperatureUnit == 'Fahrenheit' ? (temp * 9/5 + 32).round() : temp.round();
-    final displayFeelsLike = temperatureUnit == 'Fahrenheit' ? (feelsLike * 9/5 + 32).round() : feelsLike.round();
+    final displayTemp = temperatureUnit == 'Fahrenheit'
+        ? (temp * 9 / 5 + 32).round()
+        : temp.round();
+    final displayFeelsLike = temperatureUnit == 'Fahrenheit'
+        ? (feelsLike * 9 / 5 + 32).round()
+        : feelsLike.round();
     final tempUnit = temperatureUnit == 'Fahrenheit' ? '°F' : '°C';
 
     return Card(
@@ -327,7 +344,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              weatherDescription[0].toUpperCase() + weatherDescription.substring(1),
+              weatherDescription[0].toUpperCase() +
+                  weatherDescription.substring(1),
               style: AppTypography.body(16, color: Colors.white),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
@@ -375,7 +393,8 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: AppTypography.body(14, weight: FontWeight.w600, color: Colors.white),
+          style: AppTypography.body(14,
+              weight: FontWeight.w600, color: Colors.white),
         ),
       ],
     );
@@ -390,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
     for (var item in list) {
       final date = DateTime.fromMillisecondsSinceEpoch(item['dt'] * 1000);
       final dateStr = '${date.day}/${date.month}';
-      
+
       if (!dailyForecasts.any((f) => f['dateStr'] == dateStr)) {
         dailyForecasts.add({
           'dateStr': dateStr,
@@ -399,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'weather': item['weather'][0]['main'],
         });
       }
-      
+
       if (dailyForecasts.length >= 7) break;
     }
 
@@ -413,7 +432,9 @@ class _HomeScreenState extends State<HomeScreen> {
         itemBuilder: (context, index) {
           final forecast = dailyForecasts[index];
           final temp = forecast['temp'];
-          final displayTemp = temperatureUnit == 'Fahrenheit' ? (temp * 9/5 + 32).round() : temp.round();
+          final displayTemp = temperatureUnit == 'Fahrenheit'
+              ? (temp * 9 / 5 + 32).round()
+              : temp.round();
 
           return Card(
             elevation: 2,
@@ -441,7 +462,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 8),
                   Text(
                     '$displayTemp$tempUnit',
-                    style: AppTypography.body(16, weight: FontWeight.w600, color: Colors.white),
+                    style: AppTypography.body(16,
+                        weight: FontWeight.w600, color: Colors.white),
                   ),
                 ],
               ),
@@ -461,7 +483,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return 'Today';
     } else if (date.day == tomorrow.day && date.month == tomorrow.month) {
       return 'Tomorrow';
-    } else if (date.day == dayAfterTomorrow.day && date.month == dayAfterTomorrow.month) {
+    } else if (date.day == dayAfterTomorrow.day &&
+        date.month == dayAfterTomorrow.month) {
       return 'In 2 days';
     } else {
       return '${date.day}/${date.month}';

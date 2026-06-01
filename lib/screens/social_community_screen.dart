@@ -28,6 +28,7 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
   List<Map<String, dynamic>> _weatherBuddies = [];
   final Map<String, List<Map<String, dynamic>>> _buddyComments = {};
   final Map<String, String?> _commentAuthorAvatars = {};
+  final Map<String, String?> _communityPostAuthorAvatars = {};
   StreamSubscription<List<Map<String, dynamic>>>? _communityPostsSubscription;
   StreamSubscription<List<Map<String, dynamic>>>? _onlineBuddiesSubscription;
   StreamSubscription<List<Map<String, dynamic>>>? _buddyCommentsSubscription;
@@ -89,20 +90,49 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
   void _subscribeCommunityPosts() {
     _communityPostsSubscription?.cancel();
     _communityPostsSubscription =
-        _supabaseService.streamCommunityPosts().listen((posts) {
-      setState(() {
-        _communityPosts = posts.map((post) {
-          final createdAt = post['created_at'];
-          return {
-            ...post,
-            'created_at':
-                createdAt is String ? DateTime.parse(createdAt) : createdAt,
-            'timestamp':
-                createdAt is String ? DateTime.parse(createdAt) : createdAt,
-            'user': post['display_name'] ?? 'You',
-          };
-        }).toList();
-      });
+        _supabaseService.streamCommunityPosts().listen((posts) async {
+      final formattedPosts = posts.map((post) {
+        final createdAt = post['created_at'];
+        return {
+          ...post,
+          'created_at':
+              createdAt is String ? DateTime.parse(createdAt) : createdAt,
+          'timestamp':
+              createdAt is String ? DateTime.parse(createdAt) : createdAt,
+          'user': post['display_name'] ?? 'You',
+        };
+      }).toList();
+
+      final authorIds = formattedPosts
+          .map((post) => post['user_id'] as String?)
+          .whereType<String>()
+          .toSet()
+          .toList();
+
+      Map<String, String?> postAuthorAvatars = {};
+      if (authorIds.isNotEmpty) {
+        try {
+          postAuthorAvatars =
+              await _supabaseService.getProfilePictureUrls(authorIds);
+        } catch (e) {
+          debugPrint('Failed to load community post author avatars: $e');
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _communityPostAuthorAvatars
+            ..clear()
+            ..addAll(postAuthorAvatars);
+          _communityPosts = formattedPosts.map((post) {
+            final userId = post['user_id'] as String?;
+            return {
+              ...post,
+              'avatarUrl': userId != null ? postAuthorAvatars[userId] : null,
+            };
+          }).toList();
+        });
+      }
     }, onError: (error) {
       debugPrint('Community posts stream error: $error');
     });
@@ -1338,6 +1368,8 @@ class _SocialCommunityScreenState extends State<SocialCommunityScreen> {
                                       const SizedBox(width: 4),
                                       UserRoleBadge(
                                         displayName: post['user'] as String,
+                                        profilePictureUrl:
+                                            post['avatarUrl'] as String?,
                                       ),
                                     ],
                                   ),

@@ -56,77 +56,85 @@ class UserRoleBadge extends StatelessWidget {
     final roleLabel = getRoleLabel(displayName);
     final showRole = roleLabel != 'Weatherboo user';
 
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      barrierDismissible: true,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            top: 24,
-            left: 24,
-            right: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 42,
-                backgroundColor: AppColors.surfaceElevated,
-                backgroundImage: profilePictureUrl != null
-                    ? NetworkImage(profilePictureUrl!)
-                    : null,
-                child: profilePictureUrl == null
-                    ? Text(
-                        displayName.isNotEmpty
-                            ? displayName[0].toUpperCase()
-                            : 'W',
-                        style: AppTypography.headline(28,
-                            color: AppColors.sakuraDeep),
-                      )
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                displayName,
-                style: AppTypography.headline(20),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                roleLabel,
-                style: AppTypography.body(14,
-                    color: showRole ? AppColors.text : AppColors.textMuted,
-                    weight: FontWeight.w600),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: getBadgeColor(displayName),
-                  shape: BoxShape.circle,
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.16),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
                 ),
-                child: Icon(
-                  getBadgeIcon(displayName),
-                  color: AppColors.onPrimary,
-                  size: 32,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 42,
+                  backgroundColor: AppColors.surfaceElevated,
+                  backgroundImage: profilePictureUrl != null
+                      ? NetworkImage(profilePictureUrl!)
+                      : null,
+                  child: profilePictureUrl == null
+                      ? Text(
+                          displayName.isNotEmpty
+                              ? displayName[0].toUpperCase()
+                              : 'W',
+                          style: AppTypography.headline(28,
+                              color: AppColors.sakuraDeep),
+                        )
+                      : null,
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                showRole
-                    ? 'Tap again to close this role card.'
-                    : 'This is a Weatherboo user.',
-                style: AppTypography.body(13, color: AppColors.textMuted),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+                Text(
+                  displayName,
+                  style: AppTypography.headline(20),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  roleLabel,
+                  style: AppTypography.body(14,
+                      color: showRole ? AppColors.text : AppColors.textMuted,
+                      weight: FontWeight.w600),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: getBadgeColor(displayName),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    getBadgeIcon(displayName),
+                    color: AppColors.onPrimary,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  showRole
+                      ? 'Tap outside to close this role card.'
+                      : 'This is a Weatherboo user.',
+                  style: AppTypography.body(13, color: AppColors.textMuted),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       },
