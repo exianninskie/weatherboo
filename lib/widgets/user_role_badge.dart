@@ -19,7 +19,7 @@ class UserRoleBadge extends StatelessWidget {
       case 'ninskie':
         return 'Creator';
       case 'test-user':
-        return 'Main Tester';
+        return 'Moderator';
       case 'test-user2':
         return 'Multi-user Tester';
       default:
