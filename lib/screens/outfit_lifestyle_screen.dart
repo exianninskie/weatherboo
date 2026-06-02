@@ -669,6 +669,14 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
       subtitle: 'Beverage recommendations for today',
       color: AppColors.lavender,
       items: suggestions,
+      actionLinks: const [
+        _EcommerceLink(label: 'Starbucks', url: 'https://www.starbucks.com'),
+        _EcommerceLink(
+          label: 'The Coffee Bean & Tea Leaf',
+          url: 'https://www.coffeebean.com',
+        ),
+        _EcommerceLink(label: 'Chatime', url: 'https://www.chatime.com'),
+      ],
     );
   }
 
