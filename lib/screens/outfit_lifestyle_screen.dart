@@ -646,7 +646,7 @@ class _OutfitLifestyleScreenState extends State<OutfitLifestyleScreen> {
       items: suggestions,
       actionLinks: const [
         _EcommerceLink(label: 'Amazon', url: 'https://www.amazon.com'),
-        _EcommerceLink(label: 'eBay', url: 'https://www.ebay.com'),
+        _EcommerceLink(label: 'Etsy', url: 'https://www.etsy.com'),
         _EcommerceLink(label: 'Alibaba', url: 'https://www.alibaba.com'),
       ],
     );
