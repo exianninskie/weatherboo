@@ -71,8 +71,8 @@ class SelfCareWellnessScreen extends StatelessWidget {
                         url: 'https://www.amazon.com',
                       ),
                       _EcommerceLink(
-                        label: 'eBay',
-                        url: 'https://www.ebay.com',
+                        label: 'Etsy',
+                        url: 'https://www.etsy.com',
                       ),
                       _EcommerceLink(
                         label: 'Alibaba',
