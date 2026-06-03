@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
-import '../utils/constants.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
 import '../widgets/user_role_badge.dart';
@@ -113,9 +112,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               final location = profile?['location'] ?? '';
               final profilePictureUrl = userProvider.profilePictureUrl;
 
-              return SingleChildScrollView(
-                child: ResponsiveCenter(
-                  padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
+              return ResponsiveCenter(
+                padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
+                child: SingleChildScrollView(
                   child: Column(
                     children: [
                       // Profile Header
@@ -152,17 +151,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Row(
                                       children: [
                                         Expanded(
-                                          child: Text(
-                                            displayName,
-                                            style: AppTypography.headline(20),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  displayName,
+                                                  style: AppTypography.headline(
+                                                      20),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              UserRoleBadge(
+                                                displayName: displayName,
+                                                profilePictureUrl:
+                                                    profilePictureUrl,
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        UserRoleBadge(
-                                          displayName: displayName,
-                                          profilePictureUrl: profilePictureUrl,
                                         ),
                                         const SizedBox(width: 8),
                                         Container(

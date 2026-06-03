@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
-import '../utils/constants.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
 
@@ -23,7 +22,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _locationController = TextEditingController();
   final _bioController = TextEditingController();
   final _cityController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _notificationsEnabled = true;
   bool _emailNotificationsEnabled = true;
@@ -75,7 +74,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       prefixIconColor: AppColors.sakura,
       disabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: AppColors.lavender.withValues(alpha: 0.4)),
+        borderSide:
+            BorderSide(color: AppColors.lavender.withValues(alpha: 0.4)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -100,8 +100,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _bioController.text = profile['bio'] ?? '';
       _cityController.text = profile['default_city'] ?? '';
       _notificationsEnabled = profile['notifications_enabled'] ?? true;
-      _emailNotificationsEnabled = profile['email_notifications_enabled'] ?? true;
-      _desktopNotificationsEnabled = profile['desktop_notifications_enabled'] ?? true;
+      _emailNotificationsEnabled =
+          profile['email_notifications_enabled'] ?? true;
+      _desktopNotificationsEnabled =
+          profile['desktop_notifications_enabled'] ?? true;
       _temperatureUnit = profile['temperature_unit'] ?? 'Celsius';
     });
   }
@@ -113,58 +115,58 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       initiallyVisible: true,
       child: Scaffold(
         extendBodyBehindAppBar: true,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        flexibleSpace: Container(decoration: AppTheme.appBarGradient),
-        title: Text('Edit Profile', style: AppTypography.headline(20)),
-        actions: [
-          TextButton(
-            onPressed: _saveProfile,
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text('Save'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
-      ),
-      body: KawaiiBackground(
-        child: Consumer<UserProvider>(
-        builder: (context, userProvider, child) {
-          if (userProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          return ResponsiveCenter(
-            padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 350),
-                  _buildProfileHeader(userProvider),
-                  const SizedBox(height: 24),
-                  _buildProfileForm(userProvider),
-                  const SizedBox(height: 24),
-                  _buildPreferencesSection(userProvider),
-                  const SizedBox(height: 32),
-                ],
-              ),
+          flexibleSpace: Container(decoration: AppTheme.appBarGradient),
+          title: Text('Edit Profile', style: AppTypography.headline(20)),
+          actions: [
+            TextButton(
+              onPressed: _saveProfile,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Save'),
             ),
-          );
-        },
+          ],
+        ),
+        body: KawaiiBackground(
+          child: Consumer<UserProvider>(
+            builder: (context, userProvider, child) {
+              if (userProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              return ResponsiveCenter(
+                padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildProfileHeader(userProvider),
+                      const SizedBox(height: 24),
+                      _buildProfileForm(userProvider),
+                      const SizedBox(height: 24),
+                      _buildPreferencesSection(userProvider),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -204,12 +206,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           backgroundImage: _profileImage != null
                               ? FileImage(_profileImage!)
                               : (userProvider.profilePictureUrl != null
-                                  ? NetworkImage(userProvider.profilePictureUrl!) as ImageProvider
+                                  ? NetworkImage(
+                                          userProvider.profilePictureUrl!)
+                                      as ImageProvider
                                   : null),
-                          child: _profileImage == null && userProvider.profilePictureUrl == null
+                          child: _profileImage == null &&
+                                  userProvider.profilePictureUrl == null
                               ? Text(
-                                  (_displayNameController.text.isNotEmpty 
-                                      ? _displayNameController.text[0].toUpperCase()
+                                  (_displayNameController.text.isNotEmpty
+                                      ? _displayNameController.text[0]
+                                          .toUpperCase()
                                       : 'U'),
                                   style: const TextStyle(
                                     fontSize: 24,
@@ -341,7 +347,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildEditablePreference(String label, TextEditingController controller, IconData icon) {
+  Widget _buildEditablePreference(
+      String label, TextEditingController controller, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
@@ -392,7 +399,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          const Icon(Icons.notifications, color: AppColors.primaryBlue, size: 20),
+          const Icon(Icons.notifications,
+              color: AppColors.primaryBlue, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -450,7 +458,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          const Icon(Icons.desktop_windows, color: AppColors.primaryBlue, size: 20),
+          const Icon(Icons.desktop_windows,
+              color: AppColors.primaryBlue, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -482,11 +491,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         maxHeight: 512,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         final userProvider = Provider.of<UserProvider>(context, listen: false);
         final success = await userProvider.uploadProfilePicture(image);
-        
+
         if (success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -497,7 +506,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(userProvider.error ?? 'Failed to update profile picture'),
+              content: Text(
+                  userProvider.error ?? 'Failed to update profile picture'),
               backgroundColor: AppColors.sakuraDeep,
             ),
           );
@@ -523,7 +533,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
+
     try {
       // Update email if changed
       if (_emailController.text != userProvider.email) {
