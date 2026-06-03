@@ -9,6 +9,8 @@ import 'outfit_lifestyle_screen.dart';
 import 'mood_motivation_screen.dart';
 import 'social_community_screen.dart';
 import 'selfcare_wellness_screen.dart';
+import 'behind_the_boo_screen.dart';
+import 'creators_corner_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -132,6 +134,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           builder: (context) => const SelfCareWellnessScreen()),
                     );
                     break;
+                  case 'behind':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const BehindTheBooScreen()),
+                    );
+                    break;
+                  case 'creator':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CreatorsCornerScreen()),
+                    );
+                    break;
                 }
               },
               itemBuilder: (context) => [
@@ -172,6 +188,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icon(Icons.self_improvement_outlined, size: 20),
                       SizedBox(width: 12),
                       Text('Self-Care & Wellness'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'behind',
+                  child: Row(
+                    children: [
+                      Icon(Icons.bolt_outlined, size: 20),
+                      SizedBox(width: 12),
+                      Text('Behind The Boo'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'creator',
+                  child: Row(
+                    children: [
+                      Icon(Icons.create_outlined, size: 20),
+                      SizedBox(width: 12),
+                      Text("The Creator's Corner"),
                     ],
                   ),
                 ),

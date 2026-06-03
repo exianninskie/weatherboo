@@ -7,6 +7,8 @@ import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/behind_the_boo_screen.dart';
+import 'screens/creators_corner_screen.dart';
 import 'providers/user_provider.dart';
 import 'theme/app_theme.dart';
 import 'utils/constants.dart';
@@ -42,6 +44,8 @@ class WeatherbooApp extends StatelessWidget {
           '/signup': (context) => const SignupScreen(),
           '/home': (context) => const HomeScreen(),
           '/profile': (context) => const ProfileScreen(),
+          '/behind-boo': (context) => const BehindTheBooScreen(),
+          '/creators-corner': (context) => const CreatorsCornerScreen(),
         },
       ),
     );
