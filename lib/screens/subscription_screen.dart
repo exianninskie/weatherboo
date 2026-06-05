@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
+import '../widgets/subscription_badges.dart';
 
 class SubscriptionScreen extends StatelessWidget {
   const SubscriptionScreen({super.key});
@@ -132,21 +133,13 @@ class SubscriptionScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    title.contains('Platinum')
-                        ? Icons.workspace_premium_outlined
-                        : title.contains('Gold')
-                            ? Icons.emoji_events_outlined
-                            : Icons.star_outline,
-                    size: 28,
-                    color: color,
-                  ),
+                SubscriptionBadge(
+                  plan: title.contains('Platinum')
+                      ? 'Platinum'
+                      : title.contains('Gold')
+                          ? 'Gold'
+                          : 'Silver',
+                  size: 32,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
