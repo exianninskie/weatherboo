@@ -17,16 +17,16 @@ class SubscriptionBadge extends StatelessWidget {
 
     switch (plan.toLowerCase()) {
       case 'platinum':
-        imagePath = 'assets/images/platinum_badge.svg';
+        imagePath = 'assets/images/Weatherboo - Badge - Platinum.png';
         break;
       case 'gold':
-        imagePath = 'assets/images/gold_badge.svg';
+        imagePath = 'assets/images/Weatherboo - Badge - Gold.png';
         break;
       case 'silver':
-        imagePath = 'assets/images/silver_badge.svg';
+        imagePath = 'assets/images/Weatherboo - Badge - Silver.png';
         break;
       default:
-        imagePath = 'assets/images/silver_badge.svg';
+        imagePath = 'assets/images/Weatherboo - Badge - Silver.png';
     }
 
     return Container(
