@@ -13,41 +13,33 @@ class SubscriptionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    IconData iconData;
-    Color color;
+    String imagePath;
 
     switch (plan.toLowerCase()) {
       case 'platinum':
-        iconData = Icons.workspace_premium_outlined;
-        color = AppColors.sakura;
+        imagePath = 'assets/images/platinum_badge.svg';
         break;
       case 'gold':
-        iconData = Icons.emoji_events_outlined;
-        color = AppColors.lavender;
+        imagePath = 'assets/images/gold_badge.svg';
         break;
       case 'silver':
-        iconData = Icons.star_outline;
-        color = AppColors.sky;
+        imagePath = 'assets/images/silver_badge.svg';
         break;
       default:
-        iconData = Icons.star_outline;
-        color = AppColors.sky;
+        imagePath = 'assets/images/silver_badge.svg';
     }
 
     return Container(
-      padding: EdgeInsets.all(size * 0.3),
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(size * 0.5),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1.5,
-        ),
       ),
-      child: Icon(
-        iconData,
-        size: size,
-        color: color,
+      child: Image.asset(
+        imagePath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
       ),
     );
   }
