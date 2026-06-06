@@ -29,17 +29,14 @@ class SubscriptionBadge extends StatelessWidget {
         imagePath = 'assets/images/Weatherboo - Badge - Silver.png';
     }
 
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size * 0.5),
-      ),
       child: Image.asset(
         imagePath,
         width: size,
         height: size,
-        fit: BoxFit.cover,
+        fit: BoxFit.fill,
       ),
     );
   }
