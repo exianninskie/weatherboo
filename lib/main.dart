@@ -9,9 +9,17 @@ import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/behind_the_boo_screen.dart';
 import 'screens/creators_corner_screen.dart';
+import 'screens/outfit_lifestyle_screen.dart';
+import 'screens/mood_motivation_screen.dart';
+import 'screens/social_community_screen.dart';
+import 'screens/selfcare_wellness_screen.dart';
+import 'screens/subscription_screen.dart';
+import 'screens/merchandise_screen.dart';
+import 'screens/weatherboo_merchandise_screen.dart';
 import 'providers/user_provider.dart';
 import 'theme/app_theme.dart';
 import 'utils/constants.dart';
+import 'utils/routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,14 +46,22 @@ class WeatherbooApp extends StatelessWidget {
         title: 'Weatherboo',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.kawaii,
-        initialRoute: '/login',
+        initialRoute: Routes.login,
         routes: {
-          '/login': (context) => const LoginScreen(),
-          '/signup': (context) => const SignupScreen(),
-          '/home': (context) => const HomeScreen(),
-          '/profile': (context) => const ProfileScreen(),
-          '/behind-boo': (context) => const BehindTheBooScreen(),
-          '/creators-corner': (context) => const CreatorsCornerScreen(),
+          Routes.login: (context) => const LoginScreen(),
+          Routes.signup: (context) => const SignupScreen(),
+          Routes.home: (context) => const HomeScreen(),
+          Routes.profile: (context) => const ProfileScreen(),
+          Routes.behindTheBoo: (context) => const BehindTheBooScreen(),
+          Routes.creatorsCorner: (context) => const CreatorsCornerScreen(),
+          Routes.outfitLifestyle: (context) => const OutfitLifestyleScreen(),
+          Routes.moodMotivation: (context) => const MoodMotivationScreen(),
+          Routes.socialCommunity: (context) => const SocialCommunityScreen(),
+          Routes.selfCareWellness: (context) => const SelfCareWellnessScreen(),
+          Routes.subscription: (context) => const SubscriptionScreen(),
+          Routes.merchandise: (context) => const MerchandiseScreen(),
+          Routes.weatherbooMerchandise: (context) =>
+              const WeatherbooMerchandiseScreen(),
         },
       ),
     );

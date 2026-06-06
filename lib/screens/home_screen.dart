@@ -5,12 +5,7 @@ import '../providers/user_provider.dart';
 import '../services/weather_service.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
-import 'outfit_lifestyle_screen.dart';
-import 'mood_motivation_screen.dart';
-import 'social_community_screen.dart';
-import 'selfcare_wellness_screen.dart';
-import 'behind_the_boo_screen.dart';
-import 'creators_corner_screen.dart';
+import '../utils/routes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -107,46 +102,28 @@ class _HomeScreenState extends State<HomeScreen> {
               onSelected: (value) {
                 switch (value) {
                   case 'outfit':
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const OutfitLifestyleScreen()),
-                    );
+                    Navigator.pushNamed(context, Routes.outfitLifestyle);
                     break;
                   case 'mood':
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const MoodMotivationScreen()),
-                    );
+                    Navigator.pushNamed(context, Routes.moodMotivation);
                     break;
                   case 'social':
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SocialCommunityScreen()),
-                    );
+                    Navigator.pushNamed(context, Routes.socialCommunity);
                     break;
                   case 'selfcare':
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SelfCareWellnessScreen()),
-                    );
+                    Navigator.pushNamed(context, Routes.selfCareWellness);
                     break;
                   case 'behind':
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const BehindTheBooScreen()),
-                    );
+                    Navigator.pushNamed(context, Routes.behindTheBoo);
                     break;
                   case 'creator':
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const CreatorsCornerScreen()),
-                    );
+                    Navigator.pushNamed(context, Routes.creatorsCorner);
+                    break;
+                  case 'subscription':
+                    Navigator.pushNamed(context, Routes.subscription);
+                    break;
+                  case 'merchandise':
+                    Navigator.pushNamed(context, Routes.merchandise);
                     break;
                 }
               },
@@ -192,6 +169,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const PopupMenuItem(
+                  value: 'subscription',
+                  child: Row(
+                    children: [
+                      Icon(Icons.subscriptions_outlined, size: 20),
+                      SizedBox(width: 12),
+                      Text('Subscription'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'merchandise',
+                  child: Row(
+                    children: [
+                      Icon(Icons.shopping_bag_outlined, size: 20),
+                      SizedBox(width: 12),
+                      Text('Merchandise'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
                   value: 'behind',
                   child: Row(
                     children: [
@@ -215,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.person_outline),
-              onPressed: () => Navigator.pushNamed(context, '/profile'),
+              onPressed: () => Navigator.pushNamed(context, Routes.profile),
               tooltip: 'Profile',
             ),
           ],

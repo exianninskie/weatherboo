@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../providers/user_provider.dart';
+import '../utils/routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, Routes.home);
       } else if (mounted) {
         String errorMessage = userProvider.error ?? 'Error signing in';
         if (errorMessage.contains('email_not_confirmed')) {
@@ -142,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/signup');
+                        Navigator.pushNamed(context, Routes.signup);
                       },
                       child: const Text("Don't have an account? Sign Up"),
                     ),

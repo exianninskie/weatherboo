@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/routes.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
 import '../widgets/user_role_badge.dart';
@@ -47,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     await userProvider.signOut();
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, Routes.login);
     }
   }
 
@@ -62,7 +63,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-            onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, Routes.home),
           ),
           flexibleSpace: Container(decoration: AppTheme.appBarGradient),
           actions: [

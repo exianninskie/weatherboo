@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/routes.dart';
 import '../widgets/custom_logo.dart';
 import '../providers/user_provider.dart';
 import '../models/city_model.dart';
@@ -54,7 +55,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sign up successful! Please sign in.')),
         );
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, Routes.login);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(userProvider.error ?? 'Failed to sign up')),
@@ -127,7 +128,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 : Icons.visibility_off_outlined,
                           ),
                           onPressed: () {
-                            setState(() => _obscurePassword = !_obscurePassword);
+                            setState(
+                                () => _obscurePassword = !_obscurePassword);
                           },
                         ),
                       ),
@@ -148,7 +150,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           onPressed: () {
                             setState(
-                              () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                              () => _obscureConfirmPassword =
+                                  !_obscureConfirmPassword,
                             );
                           },
                         ),
@@ -161,7 +164,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         labelText: 'Default City',
                         prefixIcon: Icon(Icons.location_city),
                       ),
-                      items: CityLandmarks.cities.keys.toList().map((String city) {
+                      items:
+                          CityLandmarks.cities.keys.toList().map((String city) {
                         return DropdownMenuItem<String>(
                           value: city,
                           child: Text(city),
@@ -184,7 +188,8 @@ class _SignupScreenState extends State<SignupScreen> {
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Text('Sign Up ✨'),
                       ),
@@ -192,7 +197,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/login');
+                        Navigator.pushReplacementNamed(context, Routes.login);
                       },
                       child: const Text('Already have an account? Sign In'),
                     ),
