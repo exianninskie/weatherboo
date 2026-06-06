@@ -39,7 +39,7 @@ class SubscriptionBadge extends StatelessWidget {
         imagePath,
         width: size,
         height: size,
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
       ),
     );
   }
@@ -48,7 +48,7 @@ class SubscriptionBadge extends StatelessWidget {
 class PlatinumBadge extends StatelessWidget {
   final double size;
 
-  const PlatinumBadge({super.key, this.size = 32});
+  const PlatinumBadge({super.key, this.size = 64});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +59,7 @@ class PlatinumBadge extends StatelessWidget {
 class GoldBadge extends StatelessWidget {
   final double size;
 
-  const GoldBadge({super.key, this.size = 32});
+  const GoldBadge({super.key, this.size = 64});
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +70,7 @@ class GoldBadge extends StatelessWidget {
 class SilverBadge extends StatelessWidget {
   final double size;
 
-  const SilverBadge({super.key, this.size = 32});
+  const SilverBadge({super.key, this.size = 64});
 
   @override
   Widget build(BuildContext context) {
