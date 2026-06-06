@@ -139,7 +139,7 @@ class SubscriptionScreen extends StatelessWidget {
                       : title.contains('Gold')
                           ? 'Gold'
                           : 'Silver',
-                  size: 32,
+                  size: 64,
                 ),
                 const SizedBox(width: 16),
                 Expanded(

@@ -8,7 +8,7 @@ class SubscriptionBadge extends StatelessWidget {
   const SubscriptionBadge({
     super.key,
     required this.plan,
-    this.size = 32,
+    this.size = 64,
   });
 
   @override
