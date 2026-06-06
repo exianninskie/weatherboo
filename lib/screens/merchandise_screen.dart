@@ -1,11 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/routes.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
+import '../providers/user_provider.dart';
 
-class MerchandiseScreen extends StatelessWidget {
+class MerchandiseScreen extends StatefulWidget {
   const MerchandiseScreen({super.key});
+
+  @override
+  State<MerchandiseScreen> createState() => _MerchandiseScreenState();
+}
+
+class _MerchandiseScreenState extends State<MerchandiseScreen> {
+  String _getUserSubscriptionPlan() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final profile = userProvider.userProfile;
+    return profile?['subscription_plan']?.toString().toLowerCase() ?? 'silver';
+  }
+
+  bool _isCreator() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final profile = userProvider.userProfile;
+    final displayName = profile?['display_name']?.toString().toLowerCase() ?? '';
+    return displayName.contains('ninskie');
+  }
+
+  bool _canAccessMerch(String requiredPlan) {
+    final userPlan = _getUserSubscriptionPlan();
+    final isCreator = _isCreator();
+    
+    // Creator can access exclusive merch
+    if (requiredPlan == 'platinum' && isCreator) return true;
+    
+    // Regular access based on subscription tier
+    final tierHierarchy = {'platinum': 3, 'gold': 2, 'silver': 1};
+    final userTier = tierHierarchy[userPlan] ?? 1;
+    final requiredTier = tierHierarchy[requiredPlan] ?? 1;
+    
+    return userTier >= requiredTier;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,34 +87,48 @@ class MerchandiseScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildFeatureCard(
-                    icon: Icons.palette_outlined,
-                    title: 'Seasonal Collections',
-                    subtitle:
-                        'Handpicked designs inspired by sunny, rainy, and cozy weather moods.',
+                  _buildMerchCard(
+                    icon: Icons.lock_outline,
+                    title: 'Exclusive Merch',
+                    subtitle: 'Premium merchandise for Platinum subscribers',
                     color: AppColors.sakura,
+                    requiredPlan: 'platinum',
                     items: const [
-                      'Soft pastel tees with weather-themed motifs.',
-                      'Cozy hoodies and beanies for cool, misty mornings.',
-                      'Limited-run tote bags and stickers for everyday joy.',
+                      'Limited-run tote bags with unique designs',
+                      'Seasonal bundles with limited edition packaging',
+                      'Early access to capsule collections',
+                      'Weatherboo gift items perfect for friends and yourself',
+                      'Premium exclusive merchandise',
+                      'Special edition collectibles',
                     ],
-                    actionLabel: 'Browse Collection',
-                    onActionTap: () {
-                      Navigator.pushNamed(
-                          context, Routes.weatherbooMerchandise);
-                    },
                   ),
                   const SizedBox(height: 16),
-                  _buildFeatureCard(
-                    icon: Icons.local_offer_outlined,
-                    title: 'Exclusive Drops',
-                    subtitle:
-                        'Special merchandise releases for Weatherboo members.',
+                  _buildMerchCard(
+                    icon: Icons.lock_outline,
+                    title: 'Standard Merch',
+                    subtitle: 'Quality merchandise for Gold subscribers',
                     color: AppColors.lavender,
+                    requiredPlan: 'gold',
                     items: const [
-                      'Early access to capsule collections for subscribers.',
-                      'Seasonal bundles with limited edition packaging.',
-                      'Weatherboo gift items perfect for friends and yourself.',
+                      'Weathery Tee - Soft pastel tee with weather motif',
+                      'Cozy Cloud Hoodie - Perfect for cool mornings',
+                      'Weather Beanies - Cozy beanies for misty weather',
+                      'Soft Pastel Tees - Handpicked weather-inspired designs',
+                      'Standard apparel items',
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildMerchCard(
+                    icon: Icons.lock_outline,
+                    title: 'Basic Merch',
+                    subtitle: 'Essential merchandise for Silver subscribers',
+                    color: AppColors.sky,
+                    requiredPlan: 'silver',
+                    items: const [
+                      'Sky Tote - Sunny tote bag for weather journal',
+                      'Weather-themed stickers',
+                      'Standard tote bags with weather motifs',
+                      'Basic weather accessories',
                     ],
                   ),
                 ],
@@ -91,15 +140,17 @@ class MerchandiseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard({
+  Widget _buildMerchCard({
     required IconData icon,
     required String title,
     required String subtitle,
     required Color color,
+    required String requiredPlan,
     required List<String> items,
-    String? actionLabel,
-    VoidCallback? onActionTap,
   }) {
+    final canAccess = _canAccessMerch(requiredPlan);
+    final isCreator = _isCreator();
+
     return Card(
       elevation: 4,
       child: Padding(
@@ -115,7 +166,7 @@ class MerchandiseScreen extends StatelessWidget {
                     color: color.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(icon, size: 28, color: color),
+                  child: Icon(canAccess ? Icons.lock_open : icon, size: 28, color: color),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -146,26 +197,49 @@ class MerchandiseScreen extends StatelessWidget {
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: color,
+                        color: canAccess ? color : AppColors.textMuted,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(item, style: AppTypography.body(14)),
+                      child: Text(
+                        item,
+                        style: AppTypography.body(14,
+                            color: canAccess ? null : AppColors.textMuted),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-            if (actionLabel != null && onActionTap != null) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onActionTap,
-                  child: Text(actionLabel),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: canAccess
+                    ? () {
+                        Navigator.pushNamed(context, Routes.weatherbooMerchandise);
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: canAccess ? color : AppColors.textMuted,
+                  disabledBackgroundColor: AppColors.textMuted,
                 ),
+                child: Text(
+                  canAccess ? 'Browse Collection' : 'Locked',
+                  style: TextStyle(
+                    color: canAccess ? Colors.white : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+            if (isCreator && requiredPlan == 'platinum') ...[
+              const SizedBox(height: 8),
+              Text(
+                'Creator Access',
+                style: AppTypography.body(11, color: AppColors.sakura),
+                textAlign: TextAlign.center,
               ),
             ],
           ],
