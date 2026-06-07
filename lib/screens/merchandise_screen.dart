@@ -5,6 +5,7 @@ import '../utils/routes.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
 import '../providers/user_provider.dart';
+import 'weatherboo_merchandise_screen.dart';
 
 class MerchandiseScreen extends StatefulWidget {
   const MerchandiseScreen({super.key});
@@ -219,7 +220,14 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
               child: ElevatedButton(
                 onPressed: canAccess
                     ? () {
-                        Navigator.pushNamed(context, Routes.weatherbooMerchandise);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WeatherbooMerchandiseScreen(
+                              subscriptionTier: requiredPlan,
+                            ),
+                          ),
+                        );
                       }
                     : null,
                 style: ElevatedButton.styleFrom(

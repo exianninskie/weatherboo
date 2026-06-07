@@ -5,10 +5,99 @@ import '../widgets/interactive_avatar.dart';
 import '../utils/routes.dart';
 
 class WeatherbooMerchandiseScreen extends StatelessWidget {
-  const WeatherbooMerchandiseScreen({super.key});
+  final String? subscriptionTier;
+  
+  const WeatherbooMerchandiseScreen({super.key, this.subscriptionTier});
+
+  List<Map<String, dynamic>> _getFilteredProducts() {
+    final allProducts = [
+      {
+        'title': 'Limited-Run Tote Bag',
+        'description': 'Special edition tote bag with unique design',
+        'price': '25',
+        'color': AppColors.sakura,
+        'tier': 'platinum',
+      },
+      {
+        'title': 'Seasonal Bundle',
+        'description': 'Limited edition packaging with seasonal collection',
+        'price': '59',
+        'color': AppColors.sakura,
+        'tier': 'platinum',
+      },
+      {
+        'title': 'Early Access Capsule',
+        'description': 'Subscriber-only early access to new designs',
+        'price': '45',
+        'color': AppColors.sakura,
+        'tier': 'platinum',
+      },
+      {
+        'title': 'Premium Gift Set',
+        'description': 'Weatherboo gift items perfect for friends',
+        'price': '35',
+        'color': AppColors.sakura,
+        'tier': 'platinum',
+      },
+      {
+        'title': 'Weathery Tee',
+        'description': 'Soft pastel tee with weather motif and comfy fit.',
+        'price': '29',
+        'color': AppColors.lavender,
+        'tier': 'gold',
+      },
+      {
+        'title': 'Cozy Cloud Hoodie',
+        'description': 'Perfect for cool, misty mornings and cozy evenings.',
+        'price': '39',
+        'color': AppColors.lavender,
+        'tier': 'gold',
+      },
+      {
+        'title': 'Weather Beanie',
+        'description': 'Cozy beanie for cool, misty mornings.',
+        'price': '22',
+        'color': AppColors.lavender,
+        'tier': 'gold',
+      },
+      {
+        'title': 'Sky Tote',
+        'description': 'Sunny tote bag for carrying your favorite weather journal.',
+        'price': '19',
+        'color': AppColors.sky,
+        'tier': 'silver',
+      },
+      {
+        'title': 'Weather Stickers',
+        'description': 'Weather-themed stickers for everyday joy.',
+        'price': '8',
+        'color': AppColors.sky,
+        'tier': 'silver',
+      },
+      {
+        'title': 'Basic Weather Accessories',
+        'description': 'Simple weather-inspired accessories.',
+        'price': '12',
+        'color': AppColors.sky,
+        'tier': 'silver',
+      },
+    ];
+
+    if (subscriptionTier == null) return allProducts;
+
+    final tierHierarchy = {'platinum': 3, 'gold': 2, 'silver': 1};
+    final userTier = tierHierarchy[subscriptionTier?.toLowerCase()] ?? 1;
+
+    return allProducts.where((product) {
+      final productTier = tierHierarchy[product['tier'] as String] ?? 1;
+      return productTier <= userTier;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final filteredProducts = _getFilteredProducts();
+    
     return FloatingAvatarOverlay(
       initialMessage: 'Halo! 👋 Welcome to Weatherboo!',
       initiallyVisible: true,
@@ -52,7 +141,9 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Explore our curated collection of Weatherboo apparel, accessories, and gifts designed to match your weather mood.',
+                            subscriptionTier != null
+                                ? 'Browse ${subscriptionTier!.toUpperCase()} tier merchandise collection'
+                                : 'Explore our curated collection of Weatherboo apparel, accessories, and gifts designed to match your weather mood.',
                             style: AppTypography.body(14),
                             textAlign: TextAlign.center,
                           ),
@@ -61,29 +152,17 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildProductCard(
-                    title: 'Weathery Tee',
-                    description:
-                        'Soft pastel tee with weather motif and comfy fit.',
-                    price: '29',
-                    color: AppColors.sakura,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildProductCard(
-                    title: 'Cozy Cloud Hoodie',
-                    description:
-                        'Perfect for cool, misty mornings and cozy evenings.',
-                    price: '39',
-                    color: AppColors.lavender,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildProductCard(
-                    title: 'Sky Tote',
-                    description:
-                        'Sunny tote bag for carrying your favorite weather journal.',
-                    price: '19',
-                    color: AppColors.sky,
-                  ),
+                  ...filteredProducts.map((product) => Column(
+                    children: [
+                      _buildProductCard(
+                        title: product['title'] as String,
+                        description: product['description'] as String,
+                        price: product['price'] as String,
+                        color: product['color'] as Color,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  )),
                 ],
               ),
             ),
