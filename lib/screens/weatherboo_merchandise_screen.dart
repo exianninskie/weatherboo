@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
+import '../utils/routes.dart';
 
 class WeatherbooMerchandiseScreen extends StatelessWidget {
   const WeatherbooMerchandiseScreen({super.key});
@@ -21,6 +22,14 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
           flexibleSpace: Container(decoration: AppTheme.appBarGradient),
           title:
               Text('Weatherboo Merchandise', style: AppTypography.headline(20)),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.shopping_cart_outlined),
+              onPressed: () {
+                Navigator.pushNamed(context, Routes.cart);
+              },
+            ),
+          ],
         ),
         body: KawaiiBackground(
           child: ResponsiveCenter(

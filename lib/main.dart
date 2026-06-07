@@ -16,6 +16,7 @@ import 'screens/selfcare_wellness_screen.dart';
 import 'screens/subscription_screen.dart';
 import 'screens/merchandise_screen.dart';
 import 'screens/weatherboo_merchandise_screen.dart';
+import 'screens/cart_screen.dart';
 import 'providers/user_provider.dart';
 import 'theme/app_theme.dart';
 import 'utils/constants.dart';
@@ -62,6 +63,7 @@ class WeatherbooApp extends StatelessWidget {
           Routes.merchandise: (context) => const MerchandiseScreen(),
           Routes.weatherbooMerchandise: (context) =>
               const WeatherbooMerchandiseScreen(),
+          Routes.cart: (context) => const CartScreen(),
         },
       ),
     );

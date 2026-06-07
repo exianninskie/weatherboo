@@ -14,4 +14,5 @@ class Routes {
   static const String subscription = '/subscription';
   static const String merchandise = '/merchandise';
   static const String weatherbooMerchandise = '/weatherboo-merchandise';
+  static const String cart = '/cart';
 }
