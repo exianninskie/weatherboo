@@ -135,12 +135,10 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
     
     if (subscriptionTier == null) return allProducts;
 
-    final tierHierarchy = {'platinum': 3, 'gold': 2, 'silver': 1};
-    final userTier = tierHierarchy[subscriptionTier?.toLowerCase()] ?? 1;
-
+    // Filter to show ONLY products matching the specific tier, not hierarchy
     return allProducts.where((product) {
-      final productTier = tierHierarchy[product['tier'] as String] ?? 1;
-      return productTier <= userTier;
+      final productTier = product['tier'] as String;
+      return productTier == subscriptionTier?.toLowerCase();
     }).toList();
   }
 

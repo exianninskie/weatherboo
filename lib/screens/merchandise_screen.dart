@@ -33,8 +33,8 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
     final userPlan = _getUserSubscriptionPlan();
     final isCreator = _isCreator();
     
-    // Creator can access exclusive merch
-    if (requiredPlan == 'platinum' && isCreator) return true;
+    // Creator can access all merch
+    if (isCreator) return true;
     
     // Regular access based on subscription tier
     final tierHierarchy = {'platinum': 3, 'gold': 2, 'silver': 1};
