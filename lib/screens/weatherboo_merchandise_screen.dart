@@ -130,12 +130,10 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
       },
     ];
 
-    // Creator sees all products
-    if (isCreator) return allProducts;
-    
     if (subscriptionTier == null) return allProducts;
 
     // Filter to show ONLY products matching the specific tier, not hierarchy
+    // This applies to both regular users and creator
     return allProducts.where((product) {
       final productTier = product['tier'] as String;
       return productTier == subscriptionTier?.toLowerCase();
