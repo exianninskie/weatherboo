@@ -309,21 +309,22 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
               if (validImages.length == 1)
                 Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        validImages[0]!,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: double.infinity,
-                            height: 200,
-                            color: AppColors.textMuted.withOpacity(0.1),
-                            child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
-                          );
-                        },
+                    AspectRatio(
+                      aspectRatio: 1,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          validImages[0]!,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: double.infinity,
+                              color: AppColors.textMuted.withOpacity(0.1),
+                              child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                            );
+                          },
+                        ),
                       ),
                     ),
                     if (isCreator)
@@ -350,19 +351,20 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
                     Expanded(
                       child: Stack(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              validImages[0]!,
-                              height: 200,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  height: 200,
-                                  color: AppColors.textMuted.withOpacity(0.1),
-                                  child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
-                                );
-                              },
+                          AspectRatio(
+                            aspectRatio: 1,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                validImages[0]!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: AppColors.textMuted.withOpacity(0.1),
+                                    child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           if (isCreator)
@@ -384,19 +386,20 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
                     Expanded(
                       child: Stack(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              validImages[1]!,
-                              height: 200,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  height: 200,
-                                  color: AppColors.textMuted.withOpacity(0.1),
-                                  child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
-                                );
-                              },
+                          AspectRatio(
+                            aspectRatio: 1,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                validImages[1]!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: AppColors.textMuted.withOpacity(0.1),
+                                    child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           if (isCreator)
@@ -416,7 +419,7 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
                     ),
                   ],
                 ),
-              if (isCreator && validImages.length < 2)
+              if (isCreator)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: ElevatedButton.icon(
