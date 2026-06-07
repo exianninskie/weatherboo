@@ -29,6 +29,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '25',
         'color': AppColors.sakura,
         'tier': 'platinum',
+        'images': <String?>[],
       },
       {
         'title': 'Seasonal Bundle',
@@ -36,6 +37,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '59',
         'color': AppColors.sakura,
         'tier': 'platinum',
+        'images': <String?>[],
       },
       {
         'title': 'Early Access Capsule',
@@ -43,6 +45,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '45',
         'color': AppColors.sakura,
         'tier': 'platinum',
+        'images': <String?>[],
       },
       {
         'title': 'Weatherboo Gift Items',
@@ -50,6 +53,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '35',
         'color': AppColors.sakura,
         'tier': 'platinum',
+        'images': <String?>[],
       },
       {
         'title': 'Premium Exclusive Merchandise',
@@ -57,6 +61,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '49',
         'color': AppColors.sakura,
         'tier': 'platinum',
+        'images': <String?>[],
       },
       {
         'title': 'Special Edition Collectibles',
@@ -64,6 +69,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '39',
         'color': AppColors.sakura,
         'tier': 'platinum',
+        'images': <String?>[],
       },
       {
         'title': 'Weathery Tee',
@@ -71,6 +77,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '29',
         'color': AppColors.lavender,
         'tier': 'gold',
+        'images': <String?>[],
       },
       {
         'title': 'Cozy Cloud Hoodie',
@@ -78,6 +85,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '39',
         'color': AppColors.lavender,
         'tier': 'gold',
+        'images': <String?>[],
       },
       {
         'title': 'Weather Beanies',
@@ -85,6 +93,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '22',
         'color': AppColors.lavender,
         'tier': 'gold',
+        'images': <String?>[],
       },
       {
         'title': 'Soft Pastel Tees',
@@ -92,6 +101,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '27',
         'color': AppColors.lavender,
         'tier': 'gold',
+        'images': <String?>[],
       },
       {
         'title': 'Standard Apparel Items',
@@ -99,6 +109,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '32',
         'color': AppColors.lavender,
         'tier': 'gold',
+        'images': <String?>[],
       },
       {
         'title': 'Sky Tote',
@@ -106,6 +117,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '19',
         'color': AppColors.sky,
         'tier': 'silver',
+        'images': <String?>[],
       },
       {
         'title': 'Weather-themed Stickers',
@@ -113,6 +125,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '8',
         'color': AppColors.sky,
         'tier': 'silver',
+        'images': <String?>[],
       },
       {
         'title': 'Standard Tote Bags',
@@ -120,6 +133,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '15',
         'color': AppColors.sky,
         'tier': 'silver',
+        'images': <String?>[],
       },
       {
         'title': 'Basic Weather Accessories',
@@ -127,6 +141,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'price': '12',
         'color': AppColors.sky,
         'tier': 'silver',
+        'images': <String?>[],
       },
     ];
 
@@ -205,6 +220,7 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
                         description: product['description'] as String,
                         price: product['price'] as String,
                         color: product['color'] as Color,
+                        images: product['images'] as List<String?>,
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -223,7 +239,10 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
     required String description,
     required String price,
     required Color color,
+    required List<String?> images,
   }) {
+    final validImages = images.where((img) => img != null && img.isNotEmpty).toList();
+    
     return Card(
       elevation: 4,
       child: Padding(
@@ -231,6 +250,68 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Images section
+            if (validImages.isNotEmpty) ...[
+              if (validImages.length == 1)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    validImages[0]!,
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: AppColors.textMuted.withOpacity(0.1),
+                        child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                      );
+                    },
+                  ),
+                )
+              else if (validImages.length >= 2)
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          validImages[0]!,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 200,
+                              color: AppColors.textMuted.withOpacity(0.1),
+                              child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          validImages[1]!,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 200,
+                              color: AppColors.textMuted.withOpacity(0.1),
+                              child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 16),
+            ],
             Row(
               children: [
                 Container(
