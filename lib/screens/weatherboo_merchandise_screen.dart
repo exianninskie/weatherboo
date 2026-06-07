@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
 import '../utils/routes.dart';
 import '../providers/user_provider.dart';
 
-class WeatherbooMerchandiseScreen extends StatelessWidget {
+class WeatherbooMerchandiseScreen extends StatefulWidget {
   final String? subscriptionTier;
   
   const WeatherbooMerchandiseScreen({super.key, this.subscriptionTier});
+
+  @override
+  State<WeatherbooMerchandiseScreen> createState() => _WeatherbooMerchandiseScreenState();
+}
+
+class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScreen> {
+  final ImagePicker _imagePicker = ImagePicker();
+  List<Map<String, dynamic>> _products = [];
 
   bool _isCreator(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -22,7 +31,8 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
   List<Map<String, dynamic>> _getFilteredProducts(BuildContext context) {
     final isCreator = _isCreator(context);
     
-    final allProducts = [
+    if (_products.isEmpty) {
+      _products = [
       {
         'title': 'Limited-Run Tote Bag',
         'description': 'Limited-run tote bags with unique designs',
@@ -144,15 +154,56 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
         'images': <String?>[],
       },
     ];
+    }
 
-    if (subscriptionTier == null) return allProducts;
+    if (widget.subscriptionTier == null) return _products;
 
     // Filter to show ONLY products matching the specific tier, not hierarchy
     // This applies to both regular users and creator
-    return allProducts.where((product) {
+    return _products.where((product) {
       final productTier = product['tier'] as String;
-      return productTier == subscriptionTier?.toLowerCase();
+      return productTier == widget.subscriptionTier?.toLowerCase();
     }).toList();
+  }
+
+  Future<void> _uploadImage(int productIndex, int imageIndex) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          final images = _products[productIndex]['images'] as List<String?>;
+          if (images.length < 2) {
+            images.add(image.path);
+          } else if (imageIndex < images.length) {
+            images[imageIndex] = image.path;
+          }
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error uploading image: $e')),
+      );
+    }
+  }
+
+  void _deleteImage(int productIndex, int imageIndex) {
+    setState(() {
+      final images = _products[productIndex]['images'] as List<String?>;
+      images[imageIndex] = null;
+      images.removeWhere((img) => img == null);
+    });
+  }
+
+  void _updatePrice(int productIndex, String newPrice) {
+    setState(() {
+      _products[productIndex]['price'] = newPrice;
+    });
   }
 
   @override
@@ -202,8 +253,8 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            subscriptionTier != null
-                                ? 'Browse ${subscriptionTier!.toUpperCase()} tier merchandise collection'
+                            widget.subscriptionTier != null
+                                ? 'Browse ${widget.subscriptionTier!.toUpperCase()} tier merchandise collection'
                                 : 'Explore our curated collection of Weatherboo apparel, accessories, and gifts designed to match your weather mood.',
                             style: AppTypography.body(14),
                             textAlign: TextAlign.center,
@@ -213,14 +264,15 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  ...filteredProducts.map((product) => Column(
+                  ...filteredProducts.asMap().entries.map((entry) => Column(
                     children: [
                       _buildProductCard(
-                        title: product['title'] as String,
-                        description: product['description'] as String,
-                        price: product['price'] as String,
-                        color: product['color'] as Color,
-                        images: product['images'] as List<String?>,
+                        title: entry.value['title'] as String,
+                        description: entry.value['description'] as String,
+                        price: entry.value['price'] as String,
+                        color: entry.value['color'] as Color,
+                        images: entry.value['images'] as List<String?>,
+                        productIndex: _products.indexOf(entry.value),
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -240,7 +292,9 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
     required String price,
     required Color color,
     required List<String?> images,
+    required int productIndex,
   }) {
+    final isCreator = _isCreator(context);
     final validImages = images.where((img) => img != null && img.isNotEmpty).toList();
     
     return Card(
@@ -251,64 +305,125 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Images section
-            if (validImages.isNotEmpty) ...[
+            if (validImages.isNotEmpty || isCreator) ...[
               if (validImages.length == 1)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    validImages[0]!,
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        validImages[0]!,
                         width: double.infinity,
                         height: 200,
-                        color: AppColors.textMuted.withOpacity(0.1),
-                        child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
-                      );
-                    },
-                  ),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: double.infinity,
+                            height: 200,
+                            color: AppColors.textMuted.withOpacity(0.1),
+                            child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                          );
+                        },
+                      ),
+                    ),
+                    if (isCreator)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.white),
+                              onPressed: () => _deleteImage(productIndex, 0),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 )
               else if (validImages.length >= 2)
                 Row(
                   children: [
                     Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          validImages[0]!,
-                          height: 200,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              validImages[0]!,
                               height: 200,
-                              color: AppColors.textMuted.withOpacity(0.1),
-                              child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
-                            );
-                          },
-                        ),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 200,
+                                  color: AppColors.textMuted.withOpacity(0.1),
+                                  child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                                );
+                              },
+                            ),
+                          ),
+                          if (isCreator)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.white),
+                                onPressed: () => _deleteImage(productIndex, 0),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.black54,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          validImages[1]!,
-                          height: 200,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              validImages[1]!,
                               height: 200,
-                              color: AppColors.textMuted.withOpacity(0.1),
-                              child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
-                            );
-                          },
-                        ),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 200,
+                                  color: AppColors.textMuted.withOpacity(0.1),
+                                  child: Icon(Icons.broken_image, size: 48, color: AppColors.textMuted),
+                                );
+                              },
+                            ),
+                          ),
+                          if (isCreator)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.white),
+                                onPressed: () => _deleteImage(productIndex, 1),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.black54,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ],
+                ),
+              if (isCreator && validImages.length < 2)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _uploadImage(productIndex, validImages.length),
+                    icon: const Icon(Icons.add_photo_alternate),
+                    label: Text(validImages.isEmpty ? 'Add Image' : 'Add Second Image'),
+                  ),
                 ),
               const SizedBox(height: 16),
             ],
@@ -344,11 +459,34 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(price, style: AppTypography.headline(18)),
-                ElevatedButton(
-                  onPressed: () {},
-                  child: const Text('Add to Cart'),
-                ),
+                if (isCreator)
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Price',
+                        prefixText: '\$',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      controller: TextEditingController(text: price),
+                      keyboardType: TextInputType.number,
+                      onSubmitted: (newPrice) {
+                        _updatePrice(productIndex, newPrice);
+                      },
+                    ),
+                  )
+                else
+                  Text(price, style: AppTypography.headline(18)),
+                if (!isCreator)
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: const Text('Add to Cart'),
+                  ),
               ],
             ),
           ],
