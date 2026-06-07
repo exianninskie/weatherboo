@@ -15,7 +15,8 @@ class WeatherbooMerchandiseScreen extends StatelessWidget {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final profile = userProvider.userProfile;
     final displayName = profile?['display_name']?.toString().toLowerCase() ?? '';
-    return displayName.contains('ninskie');
+    final email = userProvider.email?.toString().toLowerCase() ?? '';
+    return displayName.contains('ninskie') || email == 'tlive4444@gmail.com';
   }
 
   List<Map<String, dynamic>> _getFilteredProducts(BuildContext context) {
