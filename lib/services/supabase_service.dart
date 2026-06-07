@@ -260,4 +260,62 @@ class SupabaseService {
       throw Exception('Failed to load profile picture URLs: $e');
     }
   }
+
+  // Upload merchandise image
+  Future<String?> uploadMerchandiseImage(String productId, dynamic imageFile) async {
+    try {
+      final fileName = 'merchandise/$productId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      // Handle web platform differently
+      if (imageFile is XFile) {
+        final bytes = await imageFile.readAsBytes();
+        await _supabase.storage
+            .from('merchandise_images')
+            .uploadBinary(fileName, bytes);
+      } else if (imageFile is File) {
+        await _supabase.storage
+            .from('merchandise_images')
+            .upload(fileName, imageFile);
+      }
+
+      final imageUrl =
+          _supabase.storage.from('merchandise_images').getPublicUrl(fileName);
+      return imageUrl;
+    } catch (e) {
+      throw Exception('Failed to upload merchandise image: $e');
+    }
+  }
+
+  // Save merchandise item
+  Future<bool> saveMerchandiseItem(Map<String, dynamic> merchandiseData) async {
+    try {
+      await _supabase.from('merchandise').upsert(merchandiseData);
+      return true;
+    } catch (e) {
+      throw Exception('Failed to save merchandise item: $e');
+    }
+  }
+
+  // Get all merchandise items
+  Future<List<Map<String, dynamic>>> getMerchandiseItems() async {
+    try {
+      final response = await _supabase.from('merchandise').select();
+      return (response as List<dynamic>).cast<Map<String, dynamic>>();
+    } catch (e) {
+      throw Exception('Failed to get merchandise items: $e');
+    }
+  }
+
+  // Delete merchandise image
+  Future<bool> deleteMerchandiseImage(String imageUrl) async {
+    try {
+      // Extract file path from URL
+      final uri = Uri.parse(imageUrl);
+      final path = uri.path.split('/merchandise_images/').last;
+      await _supabase.storage.from('merchandise_images').remove([path]);
+      return true;
+    } catch (e) {
+      throw Exception('Failed to delete merchandise image: $e');
+    }
+  }
 }

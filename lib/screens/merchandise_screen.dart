@@ -30,19 +30,8 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
   }
 
   bool _canAccessMerch(String requiredPlan) {
-    final isCreator = _isCreator();
-    
-    // Creator can access all merch regardless of subscription plan
-    if (isCreator) return true;
-    
-    final userPlan = _getUserSubscriptionPlan();
-    
-    // Regular access based on subscription tier
-    final tierHierarchy = {'platinum': 3, 'gold': 2, 'silver': 1};
-    final userTier = tierHierarchy[userPlan] ?? 1;
-    final requiredTier = tierHierarchy[requiredPlan] ?? 1;
-    
-    return userTier >= requiredTier;
+    // All users can browse all merch collections
+    return true;
   }
 
   @override

@@ -6,6 +6,7 @@ import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
 import '../utils/routes.dart';
 import '../providers/user_provider.dart';
+import '../services/supabase_service.dart';
 
 class WeatherbooMerchandiseScreen extends StatefulWidget {
   final String? subscriptionTier;
@@ -18,7 +19,9 @@ class WeatherbooMerchandiseScreen extends StatefulWidget {
 
 class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScreen> {
   final ImagePicker _imagePicker = ImagePicker();
+  final SupabaseService _supabaseService = SupabaseService();
   List<Map<String, dynamic>> _products = [];
+  bool _isLoading = true;
 
   bool _isCreator(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -28,10 +31,26 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
     return displayName.contains('ninskie') || email == 'tlive4444@gmail.com';
   }
 
-  List<Map<String, dynamic>> _getFilteredProducts(BuildContext context) {
+  String _getUserSubscriptionPlan(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final profile = userProvider.userProfile;
+    return profile?['subscription_plan']?.toString().toLowerCase() ?? 'none';
+  }
+
+  bool _canAddToCart(BuildContext context) {
+    final userPlan = _getUserSubscriptionPlan(context);
     final isCreator = _isCreator(context);
     
-    if (_products.isEmpty) {
+    // Creator can always add to cart
+    if (isCreator) return true;
+    
+    // Only subscribers can add to cart
+    return userPlan != 'none';
+  }
+
+  List<Map<String, dynamic>> _getFilteredProducts(BuildContext context) {
+    // Initialize default products if empty and not loading
+    if (_products.isEmpty && !_isLoading) {
       _products = [
       {
         'title': 'Limited-Run Tote Bag',
@@ -176,14 +195,19 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
       );
 
       if (image != null) {
-        setState(() {
-          final images = _products[productIndex]['images'] as List<String?>;
-          if (images.length < 2) {
-            images.add(image.path);
-          } else if (imageIndex < images.length) {
-            images[imageIndex] = image.path;
-          }
-        });
+        final productId = _products[productIndex]['title'] as String;
+        final imageUrl = await _supabaseService.uploadMerchandiseImage(productId, image);
+        
+        if (imageUrl != null) {
+          setState(() {
+            final images = _products[productIndex]['images'] as List<String?>;
+            if (images.length < 2) {
+              images.add(imageUrl);
+            } else if (imageIndex < images.length) {
+              images[imageIndex] = imageUrl;
+            }
+          });
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -192,12 +216,24 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
     }
   }
 
-  void _deleteImage(int productIndex, int imageIndex) {
-    setState(() {
+  Future<void> _deleteImage(int productIndex, int imageIndex) async {
+    try {
       final images = _products[productIndex]['images'] as List<String?>;
-      images[imageIndex] = null;
-      images.removeWhere((img) => img == null);
-    });
+      final imageUrl = images[imageIndex];
+      
+      if (imageUrl != null) {
+        await _supabaseService.deleteMerchandiseImage(imageUrl);
+      }
+      
+      setState(() {
+        images[imageIndex] = null;
+        images.removeWhere((img) => img == null);
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting image: $e')),
+      );
+    }
   }
 
   void _updatePrice(int productIndex, String newPrice) {
@@ -206,9 +242,74 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
     });
   }
 
+  Future<void> _saveMerchandiseItem(int productIndex) async {
+    try {
+      final product = _products[productIndex];
+      await _supabaseService.saveMerchandiseItem(product);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Merchandise item saved successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving merchandise item: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadMerchandiseItems() async {
+    try {
+      final items = await _supabaseService.getMerchandiseItems();
+      if (items.isNotEmpty) {
+        setState(() {
+          _products = items;
+        });
+      }
+    } catch (e) {
+      // If database is empty or error occurs, use default products
+      print('Error loading merchandise items: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMerchandiseItems();
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredProducts = _getFilteredProducts(context);
+    
+    if (_isLoading) {
+      return FloatingAvatarOverlay(
+        initialMessage: 'Halo! 👋 Welcome to Weatherboo!',
+        initiallyVisible: true,
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+              onPressed: () => Navigator.pop(context),
+            ),
+            flexibleSpace: Container(decoration: AppTheme.appBarGradient),
+            title:
+                Text('Weatherboo Merchandise', style: AppTypography.headline(20)),
+          ),
+          body: KawaiiBackground(
+            child: ResponsiveCenter(
+              padding: const EdgeInsets.fromLTRB(16, 250, 16, 16),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     
     return FloatingAvatarOverlay(
       initialMessage: 'Halo! 👋 Welcome to Weatherboo!',
@@ -422,10 +523,24 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
               if (isCreator)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: ElevatedButton.icon(
-                    onPressed: () => _uploadImage(productIndex, validImages.length),
-                    icon: const Icon(Icons.add_photo_alternate),
-                    label: Text(validImages.isEmpty ? 'Add Image' : 'Add Second Image'),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _uploadImage(productIndex, validImages.length),
+                          icon: const Icon(Icons.add_photo_alternate),
+                          label: Text(validImages.isEmpty ? 'Add Image' : 'Add Second Image'),
+                        ),
+                      ),
+                      if (validImages.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => _saveMerchandiseItem(productIndex),
+                          icon: const Icon(Icons.save),
+                          label: const Text('Save'),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               const SizedBox(height: 16),
@@ -485,10 +600,22 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
                   )
                 else
                   Text(price, style: AppTypography.headline(18)),
-                if (!isCreator)
+                if (!isCreator && _canAddToCart(context))
                   ElevatedButton(
                     onPressed: () {},
                     child: const Text('Add to Cart'),
+                  ),
+                if (!isCreator && !_canAddToCart(context))
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.textMuted.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Subscribe to Purchase',
+                      style: AppTypography.body(12, color: AppColors.textMuted),
+                    ),
                   ),
               ],
             ),
