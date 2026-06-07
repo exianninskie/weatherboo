@@ -244,7 +244,12 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
 
   Future<void> _saveMerchandiseItem(int productIndex) async {
     try {
-      final product = _products[productIndex];
+      final product = Map<String, dynamic>.from(_products[productIndex]);
+      
+      // Convert Color object to hex string for database
+      final color = product['color'] as Color;
+      product['color'] = '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+      
       await _supabaseService.saveMerchandiseItem(product);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Merchandise item saved successfully!')),
@@ -261,7 +266,19 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
       final items = await _supabaseService.getMerchandiseItems();
       if (items.isNotEmpty) {
         setState(() {
-          _products = items;
+          _products = items.map((item) {
+            // Convert color string to Color object
+            final colorString = item['color'] as String;
+            Color color;
+            if (colorString.startsWith('#')) {
+              color = Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+            } else {
+              // Default to AppColors.sky if parsing fails
+              color = AppColors.sky;
+            }
+            item['color'] = color;
+            return item;
+          }).toList();
         });
       }
     } catch (e) {
