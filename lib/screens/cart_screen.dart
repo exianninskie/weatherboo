@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
+import '../providers/user_provider.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -12,6 +14,61 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   List<Map<String, dynamic>> _cartItems = [];
+
+  String _getUserSubscriptionPlan() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    return userProvider.getSubscriptionPlan();
+  }
+
+  bool _isCreator() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final profile = userProvider.userProfile;
+    final displayName = profile?['display_name']?.toString().toLowerCase() ?? '';
+    final email = userProvider.email?.toString().toLowerCase() ?? '';
+    return displayName.contains('ninskie') || email == 'tlive4444@gmail.com';
+  }
+
+  bool _canPurchaseItem(String itemTier) {
+    final userPlan = _getUserSubscriptionPlan();
+    final isCreator = _isCreator();
+    
+    // Creator can purchase all items
+    if (isCreator) return true;
+    
+    // Subscription hierarchy: platinum > gold > silver > none
+    final tierHierarchy = {
+      'platinum': 3,
+      'gold': 2,
+      'silver': 1,
+      'none': 0,
+    };
+    
+    final userTierLevel = tierHierarchy[userPlan] ?? 0;
+    final itemTierLevel = tierHierarchy[itemTier] ?? 0;
+    
+    return userTierLevel >= itemTierLevel;
+  }
+
+  bool _hasRestrictedItems() {
+    for (final item in _cartItems) {
+      final itemTier = item['tier'] as String? ?? 'silver';
+      if (!_canPurchaseItem(itemTier)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  List<Map<String, dynamic>> _getRestrictedItems() {
+    final restricted = <Map<String, dynamic>>[];
+    for (final item in _cartItems) {
+      final itemTier = item['tier'] as String? ?? 'silver';
+      if (!_canPurchaseItem(itemTier)) {
+        restricted.add(item);
+      }
+    }
+    return restricted;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,15 +221,100 @@ class _CartScreenState extends State<CartScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Checkout coming soon!')),
-                                  );
-                                },
-                                child: const Text('Proceed to Checkout'),
+                                onPressed: _hasRestrictedItems()
+                                    ? null
+                                    : () {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                              content: Text('Checkout coming soon!')),
+                                        );
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _hasRestrictedItems()
+                                      ? AppColors.textMuted
+                                      : null,
+                                ),
+                                child: Text(
+                                  _hasRestrictedItems()
+                                      ? 'Upgrade to Purchase'
+                                      : 'Proceed to Checkout',
+                                ),
                               ),
                             ),
+                            if (_hasRestrictedItems()) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.sakura.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.sakura),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.lock_outline, 
+                                            size: 16, 
+                                            color: AppColors.sakura),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Subscription Required',
+                                          style: AppTypography.headline(14,
+                                              color: AppColors.sakura),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Some items in your cart require a higher subscription tier. Please upgrade your plan to purchase these items.',
+                                      style: AppTypography.body(12,
+                                          color: AppColors.textMuted),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ..._getRestrictedItems().map((item) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 4,
+                                            height: 4,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.sakura,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              '${item['title']} (${item['tier']})',
+                                              style: AppTypography.body(11,
+                                                  color: AppColors.textMuted),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )),
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: TextButton.icon(
+                                        onPressed: () {
+                                          Navigator.pushNamed(context, '/subscription');
+                                        },
+                                        icon: const Icon(Icons.upgrade, size: 16),
+                                        label: Text(
+                                          'Upgrade Subscription',
+                                          style: AppTypography.body(12,
+                                              color: AppColors.sakura),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

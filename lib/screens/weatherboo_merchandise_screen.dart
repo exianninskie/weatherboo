@@ -33,8 +33,7 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
 
   String _getUserSubscriptionPlan(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final profile = userProvider.userProfile;
-    return profile?['subscription_plan']?.toString().toLowerCase() ?? 'none';
+    return userProvider.getSubscriptionPlan();
   }
 
   bool _canAddToCart(BuildContext context) {
@@ -49,6 +48,9 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
   }
 
   List<Map<String, dynamic>> _getFilteredProducts(BuildContext context) {
+    final userPlan = _getUserSubscriptionPlan(context);
+    final isCreator = _isCreator(context);
+    
     // Initialize default products if empty and not loading
     if (_products.isEmpty && !_isLoading) {
       _products = [
@@ -175,13 +177,24 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
     ];
     }
 
-    if (widget.subscriptionTier == null) return _products;
+    // Creator can see all products
+    if (isCreator) return _products;
 
-    // Filter to show ONLY products matching the specific tier, not hierarchy
-    // This applies to both regular users and creator
+    // Subscription hierarchy: platinum > gold > silver > none
+    final tierHierarchy = {
+      'platinum': 3,
+      'gold': 2,
+      'silver': 1,
+      'none': 0,
+    };
+
+    final userTierLevel = tierHierarchy[userPlan] ?? 0;
+
+    // Filter products based on user's subscription tier level
     return _products.where((product) {
       final productTier = product['tier'] as String;
-      return productTier == widget.subscriptionTier?.toLowerCase();
+      final productTierLevel = tierHierarchy[productTier] ?? 0;
+      return userTierLevel >= productTierLevel;
     }).toList();
   }
 
@@ -277,6 +290,9 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
               color = AppColors.sky;
             }
             item['color'] = color;
+            // Convert images from List<dynamic> to List<String?>
+            final imagesList = item['images'] as List<dynamic>;
+            item['images'] = imagesList.map((img) => img as String?).toList();
             return item;
           }).toList();
         });
@@ -389,7 +405,7 @@ class _WeatherbooMerchandiseScreenState extends State<WeatherbooMerchandiseScree
                         description: entry.value['description'] as String,
                         price: entry.value['price'] as String,
                         color: entry.value['color'] as Color,
-                        images: entry.value['images'] as List<String?>,
+                        images: (entry.value['images'] as List<dynamic>).map((e) => e as String?).toList(),
                         productIndex: _products.indexOf(entry.value),
                       ),
                       const SizedBox(height: 16),

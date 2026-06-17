@@ -295,4 +295,33 @@ class UserProvider with ChangeNotifier {
       return true;
     }
   }
+
+  // Get user's subscription plan
+  String getSubscriptionPlan() {
+    return _userProfile?['subscription_plan']?.toString().toLowerCase() ?? 'none';
+  }
+
+  // Update user's subscription plan
+  Future<bool> updateSubscriptionPlan(String plan) async {
+    _setLoading(true);
+    _error = null;
+    
+    try {
+      final success = await _supabaseService.updateUserProfile(_userId!, {
+        'subscription_plan': plan.toLowerCase(),
+      });
+      if (success) {
+        _userProfile = {...?_userProfile, 'subscription_plan': plan.toLowerCase()};
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
 }

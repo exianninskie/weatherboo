@@ -1,11 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
 import '../widgets/subscription_badges.dart';
+import '../providers/user_provider.dart';
 
-class SubscriptionScreen extends StatelessWidget {
+class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
+
+  @override
+  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
+}
+
+class _SubscriptionScreenState extends State<SubscriptionScreen> {
+  Future<void> _handleSubscriptionSelection(String plan) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final success = await userProvider.updateSubscriptionPlan(plan);
+      
+      // Close loading dialog
+      Navigator.of(context).pop();
+      
+      if (success) {
+        final capitalizedPlan = plan[0].toUpperCase() + plan.substring(1);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$capitalizedPlan subscription activated successfully!'),
+            backgroundColor: AppColors.sakura,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to activate $plan subscription. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      Navigator.of(context).pop();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,12 +118,7 @@ class SubscriptionScreen extends StatelessWidget {
                       'Special recognition in Weatherboo community',
                     ],
                     buttonLabel: 'Choose Platinum',
-                    onButtonTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Platinum subscription selected.')),
-                      );
-                    },
+                    onButtonTap: () => _handleSubscriptionSelection('platinum'),
                   ),
                   const SizedBox(height: 16),
                   _buildPlanCard(
@@ -82,12 +131,7 @@ class SubscriptionScreen extends StatelessWidget {
                       'Invitations to select online community events',
                     ],
                     buttonLabel: 'Choose Gold',
-                    onButtonTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Gold subscription selected.')),
-                      );
-                    },
+                    onButtonTap: () => _handleSubscriptionSelection('gold'),
                   ),
                   const SizedBox(height: 16),
                   _buildPlanCard(
@@ -100,12 +144,7 @@ class SubscriptionScreen extends StatelessWidget {
                       'Participation in public community discussions',
                     ],
                     buttonLabel: 'Choose Silver',
-                    onButtonTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Silver subscription selected.')),
-                      );
-                    },
+                    onButtonTap: () => _handleSubscriptionSelection('silver'),
                   ),
                 ],
               ),

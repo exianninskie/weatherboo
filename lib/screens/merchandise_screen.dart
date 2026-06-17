@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
-import '../utils/routes.dart';
 import '../widgets/responsive_center.dart';
 import '../widgets/interactive_avatar.dart';
 import '../providers/user_provider.dart';
@@ -17,8 +16,7 @@ class MerchandiseScreen extends StatefulWidget {
 class _MerchandiseScreenState extends State<MerchandiseScreen> {
   String _getUserSubscriptionPlan() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final profile = userProvider.userProfile;
-    return profile?['subscription_plan']?.toString().toLowerCase() ?? 'silver';
+    return userProvider.getSubscriptionPlan();
   }
 
   bool _isCreator() {
@@ -30,8 +28,25 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
   }
 
   bool _canAccessMerch(String requiredPlan) {
-    // All users can browse all merch collections
-    return true;
+    final userPlan = _getUserSubscriptionPlan();
+    final isCreator = _isCreator();
+    
+    // Creator can access all merch
+    if (isCreator) return true;
+    
+    // Subscription hierarchy: platinum > gold > silver > none
+    final tierHierarchy = {
+      'platinum': 3,
+      'gold': 2,
+      'silver': 1,
+      'none': 0,
+    };
+    
+    final userTierLevel = tierHierarchy[userPlan] ?? 0;
+    final requiredTierLevel = tierHierarchy[requiredPlan] ?? 0;
+    
+    // User can access merch if their tier level is >= required tier level
+    return userTierLevel >= requiredTierLevel;
   }
 
   @override
@@ -61,7 +76,7 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         children: [
-                          Icon(Icons.shopping_bag_outlined,
+                          const Icon(Icons.shopping_bag_outlined,
                               size: 64, color: AppColors.sky),
                           const SizedBox(height: 16),
                           Text(
@@ -155,7 +170,7 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
+                    color: color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(canAccess ? Icons.lock_open : icon, size: 28, color: color),
